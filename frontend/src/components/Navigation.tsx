@@ -3,7 +3,7 @@ import { Link, useHistory } from "react-router-dom";
 import { Container, Dropdown, Menu } from "semantic-ui-react";
 import { AppContext } from "context";
 import fulllogoy from 'assets/fulllogoy.png'
-import { LoginModal } from "components";
+import { LoginModal, PasswordModal } from "components";
 import { userHome } from "utils";
 import config from "environment";
 
@@ -52,6 +52,9 @@ const Navigation = (props: Props): JSX.Element => {
                 text={user.display_name}
                 onClick={() => { history.push(userHome(user)) }}>
                 <Dropdown.Menu>
+                  {user.role === 'team' ? 
+                  <PasswordModal trigger={<Dropdown.Item text="Change Password" />} /> :
+                  <></> }
                   <Dropdown.Item onClick={handleLogout} text="Log out" />
                 </Dropdown.Menu>
               </Dropdown>

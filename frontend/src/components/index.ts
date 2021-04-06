@@ -4,6 +4,7 @@ export { default as FileDialog } from './FileDialog';
 export { default as FlipClock } from './FlipClock';
 export { default as Footer } from './Footer';
 export { default as LoginModal } from './Login'
+export { default as PasswordModal } from './Password'
 export { default as Navigation } from './Navigation';
 export { default as NotFound } from './NotFound';
 export { default as Notifications } from './Notifications';
