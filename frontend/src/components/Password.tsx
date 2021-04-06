@@ -18,7 +18,7 @@ const PasswordModal = ({ trigger, open }: PasswordModalProps): JSX.Element => {
   const [formData, setFormData] = useState({ currentPassword: '', newPassword: '', newPasswordConfirm: '' })
   const [isOpen, setOpen] = useState(open || false)
   const [isChanging, setChanging] = useState(false)
-  const [isViewable, setViewable] = useState({ currentPassword: false, newPassword: false, newPasswordConfirm: false})
+  const [isViewable, setViewable] = useState<{ [key: string]: boolean }>({ currentPassword: false, newPassword: false, newPasswordConfirm: false })
 
   const handleChange = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, [name]: value })
   const handleSubmit = async () => {
@@ -47,57 +47,61 @@ const PasswordModal = ({ trigger, open }: PasswordModalProps): JSX.Element => {
     setFormData({ currentPassword: '', newPassword: '', newPasswordConfirm: '' })
   }
 
-  const changeFieldType = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => {
-    setViewable({ ...isViewable, [name]: value })
-    try{
-        console.log(name)
-    }  catch (err) {
-        console.error(err)
-    }
-  }
-
-  return (<>
-    <Modal size='tiny'
-      closeIcon
-      onClose={() => setOpen(false)}
-      onOpen={() => setOpen(true)}
-      open={isOpen}
-      trigger={trigger}>
-      <Modal.Description>
-        {error ? <StatusMessage message={{ type: 'error', message: error }} /> : <></>}
-        <Form className='attached fluid segment' id="passwordChangeForm" onSubmit={handleSubmit}>
-          <Form.Input
-            label="Current Password"
-            type="password"
-            required
-            value={formData.currentPassword}
-            icon={ isViewable ? {name:'eye', link: true, onClick: changeFieldType(currentPassword, false)} : { name: 'eye slash', link: true, onClick: changeFieldType('currentPassword')}}
-            name="currentPassword"
-            onChange={handleChange}
-          />
-          <Form.Input
-            label="New Password"
-            type="password"
-            required
-            value={formData.newPassword}
-            icon={ isViewable ? {name:'eye', link: true, onClick: changeFieldType('newPassword')} : { name: 'eye slash', link: true, onClick: changeFieldType('newPassword')}}
-            name="newPassword"
-            onChange={handleChange}
-          />
-          <Form.Input
-            label="Retype New Password"
-            type="password"
-            required
-            value={formData.newPasswordConfirm}
-            icon={ isViewable ? {name:'eye', link: true, onClick: changeFieldType('newPasswordConfirm')} : { name: 'eye slash', link: true, onClick: changeFieldType('newPasswordConfirm')}}
-            name="newPasswordConfirm"
-            onChange={handleChange}
-          />
-          <Button type="submit" primary loading={isChanging} disabled={isChanging}>Save</Button>
-        </Form>
-      </Modal.Description>
-    </Modal>
-  </>)
+  return <Modal size='tiny'
+    closeIcon
+    onClose={() => setOpen(false)}
+    onOpen={() => setOpen(true)}
+    open={isOpen}
+    trigger={trigger}>
+    <Modal.Description>
+      {error ? <StatusMessage message={{ type: 'error', message: error }} /> : <></>}
+      <Form className='attached fluid segment' id="passwordChangeForm" onSubmit={handleSubmit}>
+        <Form.Input
+          label="Current Password"
+          type="password"
+          required
+          value={formData.currentPassword}
+          icon={{
+            field: 'currentPassword',
+            name: isViewable.currentPassword ? 'eye' : 'eye slash',
+            link: true,
+            onClick: () => setViewable({ ...isViewable, currentPassword: !isViewable.currentPassword })
+          }}
+          name="currentPassword"
+          onChange={handleChange}
+        />
+        <Form.Input
+          label="New Password"
+          type="password"
+          required
+          value={formData.newPassword}
+          icon={{
+            field: 'newPassword',
+            name: isViewable.newPassword ? 'eye' : 'eye slash',
+            link: true,
+            onClick: () => setViewable({ ...isViewable, newPassword: !isViewable.newPassword })
+          }}
+          name="newPassword"
+          onChange={handleChange}
+        />
+        <Form.Input
+          label="Retype New Password"
+          type="password"
+          required
+          value={formData.newPasswordConfirm}
+          icon={{
+            field: 'newPasswordConfirm',
+            name: isViewable.newPasswordConfirm ? 'eye' : 'eye slash',
+            link: true,
+            onClick: () => setViewable({ ...isViewable, newPasswordConfirm: !isViewable.newPasswordConfirm })
+          }}
+          name="newPasswordConfirm"
+          onChange={handleChange}
+        />
+        <Button type="submit" primary loading={isChanging} disabled={isChanging}>Save</Button>
+      </Form>
+    </Modal.Description>
+  </Modal>
 };
 
 export default PasswordModal;
