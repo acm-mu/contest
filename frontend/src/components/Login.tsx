@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useContext, useState } from "react";
+import React, { ChangeEvent, useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { Button, Form, Modal } from "semantic-ui-react";
 import { AppContext } from "context";
@@ -19,6 +19,7 @@ const LoginModal = ({ trigger, open }: LoginModalProps): JSX.Element => {
   const [formData, setFormData] = useState({ username: '', password: '' })
   const [isOpen, setOpen] = useState(open || false)
   const [isLoggingIn, setLoggingIn] = useState(false)
+  const [isMounted, setMounted] = useState(true)
 
   const handleChange = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, [name]: value })
   const handleSubmit = async () => {
@@ -47,38 +48,42 @@ const LoginModal = ({ trigger, open }: LoginModalProps): JSX.Element => {
     setFormData({ username: '', password: '' })
   }
 
-  return (<>
-    <Modal size='tiny'
-      closeIcon
-      onClose={() => setOpen(false)}
-      onOpen={() => setOpen(true)}
-      open={isOpen}
-      trigger={trigger}>
-      <Modal.Description>
-        {error ? <StatusMessage message={{ type: 'error', message: error }} /> : <></>}
-        <Form className='attached fluid segment' id="loginForm" onSubmit={handleSubmit}>
-          <img src={fulllogo} width="300px" alt="Logo" />
-          <Form.Input
-            label="Username"
-            type="text"
-            required
-            value={formData.username}
-            name="username"
-            onChange={handleChange}
-          />
-          <Form.Input
-            label="Password"
-            type="password"
-            required
-            value={formData.password}
-            name="password"
-            onChange={handleChange}
-          />
-          <Button type="submit" primary loading={isLoggingIn} disabled={isLoggingIn}>Login</Button>
-        </Form>
-      </Modal.Description>
-    </Modal>
-  </>)
+  useEffect(() => {
+    return () => setMounted(false)
+  }, [])
+
+  if (!isMounted) return <></>
+
+  return <Modal size='tiny'
+    closeIcon
+    onClose={() => setOpen(false)}
+    onOpen={() => setOpen(true)}
+    open={isOpen}
+    trigger={trigger}>
+    <Modal.Description>
+      {error ? <StatusMessage message={{ type: 'error', message: error }} /> : <></>}
+      <Form className='attached fluid segment' id="loginForm" onSubmit={handleSubmit}>
+        <img src={fulllogo} width="300px" alt="Logo" />
+        <Form.Input
+          label="Username"
+          type="text"
+          required
+          value={formData.username}
+          name="username"
+          onChange={handleChange}
+        />
+        <Form.Input
+          label="Password"
+          type="password"
+          required
+          value={formData.password}
+          name="password"
+          onChange={handleChange}
+        />
+        <Button type="submit" primary loading={isLoggingIn} disabled={isLoggingIn}>Login</Button>
+      </Form>
+    </Modal.Description>
+  </Modal>
 };
 
 export default LoginModal;
