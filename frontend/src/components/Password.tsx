@@ -58,7 +58,7 @@ const PasswordModal = ({ trigger, open }: PasswordModalProps): JSX.Element => {
       <Form className='attached fluid segment' id="passwordChangeForm" onSubmit={handleSubmit}>
         <Form.Input
           label="Current Password"
-          type="password"
+          type={isViewable.currentPassword ? 'text' : 'password'}
           required
           value={formData.currentPassword}
           icon={{
@@ -72,7 +72,7 @@ const PasswordModal = ({ trigger, open }: PasswordModalProps): JSX.Element => {
         />
         <Form.Input
           label="New Password"
-          type="password"
+          type={isViewable.newPassword ? 'text' : 'password'}
           required
           value={formData.newPassword}
           icon={{
@@ -86,7 +86,7 @@ const PasswordModal = ({ trigger, open }: PasswordModalProps): JSX.Element => {
         />
         <Form.Input
           label="Retype New Password"
-          type="password"
+          type={isViewable.newPasswordConfirm ? 'text' : 'password'}
           required
           value={formData.newPasswordConfirm}
           icon={{
