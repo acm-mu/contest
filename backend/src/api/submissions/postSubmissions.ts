@@ -145,7 +145,7 @@ export const postSubmissions = async (req: Request, res: Response) => {
 
     await contest.putItem('submission', submission)
 
-    io.emit('new_submission')
+    io.emit('new_submission', { sid: submission.sid })
 
     res.send(submission)
   } catch (err) {

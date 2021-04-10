@@ -7,7 +7,7 @@ import config from 'environment'
 import { compare } from 'utils'
 import { Helmet } from 'react-helmet'
 import { PageLoading } from 'components'
-import { SocketContext } from 'context'
+import { AppContext, SocketContext } from 'context'
 
 interface SubmissionItem extends Submission {
   checked: boolean
@@ -24,7 +24,10 @@ const Submissions = (): JSX.Element => {
   const [submissions, setSubmissions] = useState<SubmissionItem[]>([])
   const [isMounted, setMounted] = useState(true)
   const [isDeleting, setDeleting] = useState(false)
+  const [isClaiming, setClaiming] = useState<{ [key: string]: boolean }>({})
   const [showReleased, setShowReleased] = useState(false)
+
+  const { user } = useContext(AppContext)
 
   const [{ column, direction }, setSortConfig] = useState<SortConfig>({
     column: 'date',
@@ -32,7 +35,7 @@ const Submissions = (): JSX.Element => {
   })
 
   const sort = (newColumn: SortKey, submission_list: SubmissionItem[] = submissions) => {
-    const newDirection = column === newColumn ? 'descending' : 'ascending'
+    const newDirection = column === newColumn && direction == 'ascending' ? 'descending' : 'ascending'
     setSortConfig({ column: newColumn, direction: newDirection })
 
     setSubmissions(submission_list.sort((s1: Submission, s2: Submission) =>
@@ -43,11 +46,12 @@ const Submissions = (): JSX.Element => {
   useEffect(() => {
     loadSubmissions().then(() => setLoading(false))
     socket?.on('new_submission', loadSubmissions)
+    socket?.on('update_submission', loadSubmissions)
     return () => setMounted(false)
   }, [])
 
   const loadSubmissions = async () => {
-    const response = await fetch(`${config.API_URL}/submissions`, {
+    const response = await fetch(`${config.API_URL}/submissions?division=${user?.division}`, {
       headers: {
         Authorization: `Bearer ${localStorage.accessToken}`
       }
@@ -61,18 +65,13 @@ const Submissions = (): JSX.Element => {
 
   const onFilterChange = () => setShowReleased(!showReleased)
 
-  const downloadSubmissions = () =>
-    saveAs(new File([JSON.stringify(submissions, null, '\t')], 'submissions.json', { type: 'text/json;charset=utf-8' }))
-
-  const handleChange = ({ target: { id, checked } }: ChangeEvent<HTMLInputElement>) =>
-    setSubmissions(submissions.map(submission => submission.sid == id ? { ...submission, checked } : submission))
-
-  const checkAll = ({ target: { checked } }: ChangeEvent<HTMLInputElement>) =>
-    setSubmissions(submissions.map(submission => (showReleased || !submission.released) ? { ...submission, checked } : submission))
+  const downloadSubmissions = () => saveAs(new File([JSON.stringify(submissions, null, '\t')], 'submissions.json', { type: 'text/json;charset=utf-8' }))
+  const handleChange = ({ target: { id, checked } }: ChangeEvent<HTMLInputElement>) => setSubmissions(submissions.map(submission => submission.sid == id ? { ...submission, checked } : submission))
+  const checkAll = ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => setSubmissions(submissions.map(submission => ({ ...submission, checked })))
 
   const deleteSelected = async () => {
     setDeleting(true)
-    const submissionsToDelete = submissions.filter(submission => submission.checked && (!submission.released || showReleased)).map(submission => submission.sid)
+    const submissionsToDelete = submissions.filter(submission => submission.checked).map(submission => submission.sid)
     const response = await fetch(`${config.API_URL}/submissions`, {
       method: 'DELETE',
       headers: {
@@ -87,6 +86,42 @@ const Submissions = (): JSX.Element => {
     setDeleting(false)
   }
 
+  const claim = async (sid: string) => {
+    setClaiming({ ...isClaiming, [sid]: true })
+    const response = await fetch(`${config.API_URL}/submissions`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.accessToken}`
+      },
+      body: JSON.stringify({ sid, claimed: user?.uid })
+    })
+
+    if (response.ok) {
+      setSubmissions(submissions.map(sub => sub.sid == sid ? { ...sub, claimed: user } : sub))
+    }
+
+    setClaiming({ ...isClaiming, [sid]: false })
+  }
+
+  const unclaim = async (sid: string) => {
+    setClaiming({ ...isClaiming, [sid]: true })
+    const response = await fetch(`${config.API_URL}/submissions`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.accessToken}`
+      },
+      body: JSON.stringify({ sid, claimed: null })
+    })
+
+    if (response.ok) {
+      setSubmissions(submissions.map(sub => sub.sid == sid ? { ...sub, claimed: undefined } : sub))
+    }
+
+    setClaiming({ ...isClaiming, [sid]: false })
+  }
+
   const filteredSubmissions = useMemo(() =>
     submissions.filter((submission) => showReleased || !submission.released)
     , [submissions, showReleased])
@@ -94,26 +129,25 @@ const Submissions = (): JSX.Element => {
   if (isLoading) return <PageLoading />
 
   return <>
-    <Helmet><title>Abacus | Admin Submissions</title></Helmet>
+    <Helmet><title>Abacus | Judge Submissions</title></Helmet>
     <Button content="Download Submissions" onClick={downloadSubmissions} />
     {submissions.filter(submission => submission.checked).length ?
       <Button content="Delete Selected" negative onClick={deleteSelected} loading={isDeleting} disabled={isDeleting} /> : <></>}
     <Checkbox toggle label="Show Released" checked={showReleased} onClick={onFilterChange} />
 
-    <Table singleLine>
+    <Table singleLine sortable>
       <Table.Header>
         <Table.Row>
           <Table.HeaderCell collapsing><input type='checkbox' onChange={checkAll} /></Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('sid')}>Submission ID</Table.HeaderCell>
+          <Table.HeaderCell className='sortable' onClick={() => sort('sid')} sorted={column == 'sid' ? direction : undefined}>Submission ID</Table.HeaderCell>
           <Table.HeaderCell>Problem</Table.HeaderCell>
           <Table.HeaderCell>Team</Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('sub_no')}>Submission #</Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('language')}>Language</Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('status')}>Status</Table.HeaderCell>
+          <Table.HeaderCell className='sortable' onClick={() => sort('language')} sorted={column == 'language' ? direction : undefined}>Language</Table.HeaderCell>
+          <Table.HeaderCell className='sortable' onClick={() => sort('status')} sorted={column == 'status' ? direction : undefined}>Status</Table.HeaderCell>
+          <Table.HeaderCell>Claimed</Table.HeaderCell>
           <Table.HeaderCell>Released</Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('runtime')}>Runtime</Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('date')}>Time</Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('score')}>Score</Table.HeaderCell>
+          <Table.HeaderCell className='sortable' onClick={() => sort('date')} sorted={column == 'date' ? direction : undefined}>Time</Table.HeaderCell>
+          <Table.HeaderCell className='sortable' onClick={() => sort('score')} sorted={column == 'score' ? direction : undefined}>Score</Table.HeaderCell>
         </Table.Row>
       </Table.Header>
       <Table.Body>
@@ -131,14 +165,21 @@ const Submissions = (): JSX.Element => {
                   onChange={handleChange} />
               </Table.Cell>
               <Table.Cell>
-                <Link to={`/admin/submissions/${submission.sid}`}>{submission.sid.substring(0, 7)}</Link></Table.Cell>
-              <Table.Cell><Link to={`/admin/problems/${submission.pid}`}>{submission.problem?.name} </Link></Table.Cell>
-              <Table.Cell><Link to={`/admin/users/${submission.team.uid}`}>{submission.team.display_name}</Link></Table.Cell>
-              <Table.Cell>{submission.sub_no + 1}</Table.Cell>
+                <Link to={`/${user?.role}/submissions/${submission.sid}`}>{submission.sid.substring(0, 7)}</Link>
+              </Table.Cell>
+              <Table.Cell><Link to={`/${user?.role}/problems/${submission.pid}`}>{submission.problem?.name} </Link></Table.Cell>
+              <Table.Cell><Link to={`/${user?.role}/teams`}>{submission.team.display_name}</Link></Table.Cell>
               <Table.Cell>{submission.language}</Table.Cell>
               <Table.Cell><span className={`status icn ${submission.status}`} /></Table.Cell>
+              <Table.Cell>
+                {submission.claimed ?
+                  (submission.claimed?.uid === user?.uid ?
+                    <Button content="Unclaim" icon={'hand paper'} onClick={() => unclaim(submission.sid)} loading={isClaiming[submission.sid]} disabled={isClaiming[submission.sid]} labelPosition={'left'} /> :
+                    <Button content="Claimed" icon={'lock'} disabled={true} labelPosition={'left'} />
+                  ) :
+                  <Button content="Claim" icon={'hand rock'} onClick={() => claim(submission.sid)} loading={isClaiming[submission.sid]} disabled={isClaiming[submission.sid]} labelPosition={'left'} />}
+              </Table.Cell>
               <Table.Cell>{submission.released ? <Label color='green' icon='check' content="Released" /> : <Label icon='lock' content="Held" />}</Table.Cell>
-              <Table.Cell>{Math.floor(submission.runtime || 0)}</Table.Cell>
               <Table.Cell><Moment fromNow date={submission.date * 1000} /> </Table.Cell>
               <Table.Cell>{submission.score}</Table.Cell>
             </Table.Row>)}

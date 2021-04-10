@@ -1,10 +1,9 @@
 import { Submission } from 'abacus'
 import React, { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Block, BlueSubmission, Countdown, NotFound, PageLoading } from 'components'
+import { Block, Countdown, NotFound, PageLoading, SubmissionView } from 'components'
 import config from 'environment'
 import { Helmet } from 'react-helmet'
-import { SubmissionContext } from 'components/submission'
 import { Breadcrumb } from 'semantic-ui-react'
 
 const submission = (): JSX.Element => {
@@ -47,9 +46,8 @@ const submission = (): JSX.Element => {
         <Breadcrumb.Section active content={submission.sid.substring(0, 7)} />
       </Breadcrumb>
     </Block>
-    <SubmissionContext.Provider value={{ submission }}>
-      <BlueSubmission />
-    </SubmissionContext.Provider>
+
+    <SubmissionView submission={submission} />
   </>
 }
 

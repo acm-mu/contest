@@ -1,7 +1,7 @@
 import { Args, Settings } from "abacus";
-import AWS, { AWSError, Lambda, S3 } from "aws-sdk";
+import AWS, { Lambda, S3 } from "aws-sdk";
 import { v4 as uuidv4 } from 'uuid';
-import { AttributeMap, BatchWriteItemOutput, DeleteItemOutput, DocumentClient, GetItemOutput, ItemList, PutItemOutput, ScanInput, ScanOutput, UpdateItemOutput } from "aws-sdk/clients/dynamodb";
+import { AttributeMap, BatchWriteItemOutput, DeleteItemOutput, DocumentClient, ItemList, PutItemOutput, ScanInput, UpdateItemOutput } from "aws-sdk/clients/dynamodb";
 
 class ContestService {
   db: DocumentClient;
@@ -39,7 +39,7 @@ class ContestService {
         RequestItems: {
           'setting': Object.entries(settings).map((e) => ({ PutRequest: { Item: { "key": e[0], "value": e[1] } } }))
         }
-      }, (err: AWSError, data: BatchWriteItemOutput) => {
+      }, (err, data) => {
         if (err) reject(err)
         else resolve(data)
       })
@@ -47,7 +47,7 @@ class ContestService {
   }
 
   scanItems(tableName: string, query?: { args?: Args, columns?: string[] }): Promise<ItemList | undefined> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       let params: ScanInput = {
         TableName: tableName
       }
@@ -69,10 +69,18 @@ class ContestService {
             params.ExpressionAttributeNames = Object.assign({}, ...query.columns.map((e) => ({ [`#${e}`]: `${e}` })))
         }
       }
-      this.db.scan(params, (err: AWSError, data: ScanOutput) => {
-        if (err) reject(err)
-        else resolve(data.Items)
-      })
+      const scanResults: ItemList = []
+      let items;
+      try {
+        do {
+          items = await this.db.scan(params).promise();
+          items.Items?.forEach(item => scanResults.push(item))
+          params.ExclusiveStartKey = items.LastEvaluatedKey
+        } while (typeof items.LastEvaluatedKey != "undefined")
+        resolve(scanResults)
+      } catch (err) {
+        reject(err)
+      }
     })
   }
 
@@ -81,7 +89,7 @@ class ContestService {
       this.db.get({
         TableName: tableName,
         Key: key
-      }, (err: AWSError, data: GetItemOutput) => {
+      }, (err, data) => {
         if (err) reject(err)
         else resolve(data.Item)
       })
@@ -93,7 +101,7 @@ class ContestService {
       this.db.put({
         TableName: tableName,
         Item: item
-      }, (err: AWSError, data: PutItemOutput) => {
+      }, (err, data) => {
         if (err) {
           reject(err)
           return
@@ -107,13 +115,28 @@ class ContestService {
   updateItem(tableName: string, key: Args, args: Args): Promise<UpdateItemOutput> {
     return new Promise((resolve, reject) => {
       const entries = Object.entries(args).filter(entry => !Object.keys(key).includes(entry[0]))
+
+      const setEntries = entries.filter(e => e[1] != null)
+      const remEntries = entries.filter(e => e[1] == null)
+
+      const params: any = {}
+
+      const updateExpression: string[] = []
+
+      if (setEntries.length > 0) {
+        updateExpression.push("SET " + (setEntries.map(e => `#${e[0]} = :${e[0]}`).join(", ")))
+        params.ExpressionAttributeValues = Object.assign({}, ...entries.filter(e => e[1] != null).map((x) => ({ [`:${x[0]}`]: x[1] })))
+      }
+
+      if (remEntries.length > 0) updateExpression.push("REMOVE " + (remEntries.map(e => `#${e[0]}`)))
+
       this.db.update({
+        ...params,
         TableName: tableName,
         Key: key,
-        UpdateExpression: "SET " + (entries.map((e) => (`#${e[0]} = :${e[0]}`)).join(", ")),
         ExpressionAttributeNames: Object.assign({}, ...entries.map((x) => ({ [`#${x[0]}`]: x[0] }))),
-        ExpressionAttributeValues: Object.assign({}, ...entries.map((x) => ({ [`:${x[0]}`]: x[1] })))
-      }, (err: AWSError, data: UpdateItemOutput) => {
+        UpdateExpression: updateExpression.join(" | ")
+      }, (err, data) => {
         if (err) {
           reject(err)
           return
@@ -129,7 +152,7 @@ class ContestService {
       this.db.delete({
         TableName: tableName,
         Key: key
-      }, (err: AWSError, data: DeleteItemOutput) => {
+      }, (err, data) => {
         if (err) {
           reject(err)
           return

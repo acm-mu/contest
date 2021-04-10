@@ -1,7 +1,7 @@
 import { User, Notification } from 'abacus';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import { Index, Admin, Blue, Gold } from 'pages'
+import { Index, Admin, Blue, Gold, Judge } from 'pages'
 import config from 'environment'
 import { Footer, Notifications } from 'components';
 import { v4 as uuidv4 } from 'uuid';
@@ -89,6 +89,7 @@ const App = (): JSX.Element => {
           <Route path='/admin' component={Admin} />
           <Route path='/blue' component={Blue} />
           <Route path='/gold' component={Gold} />
+          <Route path='/judge' component={Judge} />
           <Route path='/' component={Index} />
         </Switch>
       </Router>

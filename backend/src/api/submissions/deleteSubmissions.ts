@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { ParamSchema, validationResult } from "express-validator"
+import { io } from '../../server';
 import contest from '../../abacus/contest';
 
 export const schema: Record<string, ParamSchema> = {
@@ -23,6 +24,7 @@ export const deleteSubmissions = async (req: Request, res: Response) => {
       try {
         await contest.deleteItem('submission', { sid })
         success++
+        io.emit('delete_submission', { sid })
       } catch (err) {
         console.error(err)
         failed++
@@ -32,6 +34,9 @@ export const deleteSubmissions = async (req: Request, res: Response) => {
   } else {
     try {
       await contest.deleteItem('submission', { sid: req.body.sid })
+
+      io.emit('delete_submission', { sid: req.body.sid })
+
       res.json({ message: "Submission successfully deleted" })
     } catch (err) {
       console.error(err)

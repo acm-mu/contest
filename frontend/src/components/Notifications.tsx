@@ -36,7 +36,7 @@ const Notifications = (): JSX.Element => {
     socket?.on('notification', (notification: Notification) => {
       if (forMe(notification)) window.sendNotification(notification)
     })
-  }, [])
+  }, [user])
 
   const forMe = ({ to }: Notification) => {
     if (!to || to == 'public') return true

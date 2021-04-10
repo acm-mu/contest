@@ -122,7 +122,7 @@ const EditUser = (): JSX.Element => {
             value={formUser?.school}
             placeholder='School'
             required />}
-        <Form.Field
+        {['team', 'judge'].includes(user.role) && <Form.Field
           control={Select}
           onChange={handleSelectChange}
           label='Division'
@@ -130,7 +130,7 @@ const EditUser = (): JSX.Element => {
           options={divisions}
           value={formUser?.division}
           placeholder='Division'
-          required />
+          required />}
         <Form.Field
           control={Input}
           onChange={handleChange}

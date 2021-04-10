@@ -29,11 +29,7 @@ const Standings = (): JSX.Element => {
 
     response = await fetch(`${config.API_URL}/standings`)
 
-    let standings = Object.values(await response.json()) as StandingsUser[]
-    standings = standings.sort((a, b) => b.solved - a.solved)
-
-    if (!isMounted) return
-    setStandings(standings)
+    setStandings(await response.json())
 
     setLoading(false)
   }
