@@ -11,7 +11,7 @@ const submissions = Router()
 
 submissions.get('/submissions', isAuthenticated, checkSchema(getSchema), getSubmissions)
 submissions.post('/submissions', isAuthenticated, checkSchema(postSchema), postSubmissions)
-submissions.put('/submissions', hasRole('judge'), checkSchema(putSchema), putSubmissions)
+submissions.put('/submissions', hasRole('proctor'), checkSchema(putSchema), putSubmissions)
 submissions.delete('/submissions', hasRole('admin'), checkSchema(deleteSchema), deleteSubmissions)
 
 submissions.post('/submissions/rerun', hasRole('judge'), checkSchema(rerunSchema), rerunSubmission)

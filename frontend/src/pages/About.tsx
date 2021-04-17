@@ -41,7 +41,16 @@ const About = (): JSX.Element => (
 
       <h2>AP Computer Science Principles (Eagle)</h2>
       <p>
-        Teams of two to four students will be working together to solve a problem that is present in society and is awaiting a technological solution. The students then have three hours to develop a solution using their knowledge of computer science principles and technologies. Students are not required to write code or create a working prototype, but rather have a flushed out, technical solution. At the end of the three hours, each team will present (5 – 10 minutes) their solution to a small board of faculty members. The faculty will ask a few questions and ultimately vote on a winner. We will have a Google Meet call where students will present and gain feedback the feedback mentioned earlier.
+        Teams of two to four students will be working together to solve a problem
+        that is present in society and is awaiting a technological solution.
+        The students then have three hours to develop a solution using their knowledge
+        of computer science principles and technologies. Students are required to
+        write some code/create a working prototype. We are not expecting a flushed
+        out UI, but a program of some sort that accomplishes their implementation/solution
+        to the problem is what we are aiming for. At the end of the three hours,
+        each team will present (5 – 10 minutes) their solution to a small board of faculty and/or student
+        members. The board will ask a few questions and ultimately vote on a winner. We
+        will have a Google Meet call where students will present and gain the feedback mentioned earlier.
       </p>
     </Block>
   </>

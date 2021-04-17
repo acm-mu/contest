@@ -8,6 +8,7 @@
     --bg-color: #eee;
     --gold: #ffca08;
     --blue: #1b3665;
+    --teal: #00b5ad;
     --sky-blue: #00b1bc;
     --light-green: #aae2ab;
     --dark-green: #4aae4b;
@@ -74,6 +75,14 @@ h6 {
     border-bottom-color: var(--gold);
 }
 
+.ui.fixed.menu.inverted.eagle-div {
+    border-bottom-color: var(--teal);
+}
+
+.ui.fixed.menu.inverted.proctor-div {
+    border-bottom-color: var(--sky-blue);
+}
+
 .ui.fixed.menu.inverted.admin-div {
     border-bottom-color: #aaa;
 }
@@ -135,4 +144,14 @@ a.button {
 .ui.checkbox {
     display: flex;
     align-items: center;
+}
+
+.justify-center {
+    display: flex;
+    align-items: center;
+}
+
+.space-between {
+    display: flex;
+    justify-content: space-between;
 }

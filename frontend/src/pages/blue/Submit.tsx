@@ -2,7 +2,7 @@ import { Problem, Submission } from 'abacus'
 import React, { ChangeEvent, useContext, useEffect, useState } from 'react'
 import { Form, Button, Breadcrumb } from 'semantic-ui-react'
 import { Link, useHistory, useParams } from 'react-router-dom'
-import { Block, Countdown, FileDialog, NotFound, PageLoading } from 'components'
+import { Block, Countdown, FileDialog, NotFound, PageLoading, StatusMessage, Unauthorized } from 'components'
 import config from 'environment'
 import { AppContext } from 'context'
 import { Language, languages } from 'utils'
@@ -16,6 +16,7 @@ const Submit = (): JSX.Element => {
   const [language, setLanguage] = useState<Language>()
   const [file, setFile] = useState<File>()
   const [isSubmitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string>()
   const history = useHistory()
 
   const [isMounted, setMounted] = useState(true)
@@ -37,18 +38,20 @@ const Submit = (): JSX.Element => {
 
     if (response.ok) {
       const problem = Object.values(await response.json())[0] as Problem
+
       setProblem(problem)
+      if (problem) {
+        response = await fetch(`${config.API_URL}/submissions?tid=${user?.uid}&pid=${problem.pid}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.accessToken}`
+          }
+        })
 
-      response = await fetch(`${config.API_URL}/submissions?tid=${user?.uid}&pid=${problem.pid}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.accessToken}`
+        if (!isMounted) return
+
+        if (response.ok) {
+          setSubmissions(Object.values(await response.json()))
         }
-      })
-
-      if (!isMounted) return
-
-      if (response.ok) {
-        setSubmissions(Object.values(await response.json()))
       }
     }
     setLoading(false)
@@ -71,7 +74,8 @@ const Submit = (): JSX.Element => {
     })
 
     if (res.status != 200) {
-      alert("An error occurred! Please try again")
+      const { message } = await res.json()
+      setError(message)
       setSubmitting(false)
       return
     }
@@ -107,6 +111,41 @@ const Submit = (): JSX.Element => {
 
   if (isLoading) return <PageLoading />
   if (!problem) return <NotFound />
+  if (user?.division != 'blue' && user?.role != 'admin') return <Unauthorized />
+
+  if (user.disabled) {
+    return <>
+      <Helmet><title>Abacus | Blue Submit</title></Helmet>
+      <Countdown />
+      <Block size='xs-12'>
+        <h2>Your account has been disabled!</h2>
+        <p>You are not allowed to submit problems because your account has been disabled.</p>
+      </Block>
+    </>
+  }
+
+  if (submissions?.filter(e => e.status == "accepted").length !== 0) {
+    return <>
+      <Helmet><title>Abacus | Blue Submit</title></Helmet>
+      <Countdown />
+      <Block size='xs-12'>
+        <h2>You Already Solved This Problem!</h2>
+        <p><Link to={`/blue/submissions/${submissions?.filter(e => e.status === "accepted")[0].sid}`}>Go to your solved submission</Link></p>
+      </Block>
+    </>
+  }
+
+  if (submissions?.filter(({ status, released }) => status == 'pending' || !released).length !== 0) {
+    return <>
+      <Helmet><title>Abacus | Blue Submit</title></Helmet>
+      <Countdown />
+      <Block size='xs-12'>
+        <h2>Cannot submit to {problem.name}</h2>
+        <p>You cannot submit until your last submission has been graded and released!</p>
+        <p><Link to='/blue/problems'>Go back to problems.</Link></p>
+      </Block>
+    </>
+  }
 
   return <>
     <Helmet> <title>Abacus | Blue Submit</title> </Helmet>
@@ -120,35 +159,29 @@ const Submit = (): JSX.Element => {
         <Breadcrumb.Section active content="Submit" />
       </Breadcrumb>
     </Block>
-    {!submissions || submissions?.filter((e) => e.status == "accepted").length == 0 ?
-      <Block size='xs-12'>
-        <h1>Submit a solution to {problem?.name} </h1>
+    {error ? <StatusMessage message={{ type: 'error', message: error }} /> : <></>}
+    <Block size='xs-12'>
+      <h1>Submit a solution to {problem?.name} </h1>
 
-        <Form onSubmit={handleSubmit}>
-          <FileDialog file={file} onChange={uploadChange} control={(file?: File) => (
-            file ?
-              <>
-                <h3>Your upload will include the following files:</h3>
-                <ul>
-                  <li>{file.name}</li>
-                </ul>
-              </> : <p>
-                <b>Drag & drop</b> a file here to upload <br />
-                <i>(Or click and choose file)</i>
-              </p>
-          )} />
-          <Form.Select inline label='Language' placeholder="Select Language" value={language?.value} options={languages} />
+      <Form>
+        <FileDialog file={file} onChange={uploadChange} control={(file?: File) => (
+          file ? <>
+            <h3>Your upload will include the following files:</h3>
+            <ul> <li>{file.name}</li></ul>
+          </> : <p>
+            <b>Drag & drop</b> a file here to upload <br />
+            <i>(Or click and choose file)</i>
+          </p>
+        )} />
+        <Form.Select inline label='Language' placeholder="Select Language" value={language?.value} options={languages} />
 
-          <Form.Group>
-            <Form.Button primary content="Submit" loading={isSubmitting} disabled={isSubmitting} />
-            <Button onClick={history.goBack}>Cancel</Button>
-          </Form.Group>
-        </Form>
-      </Block> :
-      <Block size='xs-12' transparent>
-        <h2>You Already Solved This Problem!</h2>
-        <Link to={`/blue/submissions/${submissions.filter((e) => e.status == "accepted")[0].sid}`}>Go to your solved submission</Link>
-      </Block>}
+        <Form.Group>
+          <Form.Button primary content="Submit" onClick={handleSubmit} loading={isSubmitting} disabled={isSubmitting} />
+          <Button onClick={history.goBack}>Cancel</Button>
+        </Form.Group>
+      </Form>
+
+    </Block>
   </>
 }
 export default Submit

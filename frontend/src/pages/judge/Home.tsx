@@ -15,15 +15,10 @@ const Home = (): JSX.Element => {
   const [isMounted, setMounted] = useState(true)
   const [submissions, setSubmissions] = useState<Submission[]>()
 
-  const claimedSubmissions = useMemo(() => submissions?.filter(({ claimed }) => claimed !== undefined && claimed?.uid !== user?.uid), [submissions])
-  const pendingSubmissions = useMemo(() => submissions?.filter(({ released }) => !released), [submissions])
-  const recentSubmissions = useMemo(() => submissions?.filter(({ released }) => released).sort(({ date: date1 }, { date: date2 }) => date2 - date1), [submissions])
-  const myClaimedSubmissions = useMemo(() => submissions?.filter(({ claimed }) => claimed?.uid == user?.uid), [submissions])
-
-  console.log(claimedSubmissions?.length)
-  console.log(pendingSubmissions?.length)
-  console.log(recentSubmissions?.length)
-  console.log(myClaimedSubmissions?.length)
+  const claimedSubmissions = useMemo(() => submissions?.filter(({ claimed, released }) => !released && claimed !== undefined && claimed?.uid !== user?.uid).sort((p1, p2) => p1.date - p2.date), [submissions])
+  const pendingSubmissions = useMemo(() => submissions?.filter(({ released, claimed }) => !released && !claimed).sort((p1, p2) => p1.date - p2.date), [submissions])
+  const recentSubmissions = useMemo(() => submissions?.filter(({ released }) => released).sort((p1, p2) => p2.date - p1.date), [submissions])
+  const myClaimedSubmissions = useMemo(() => submissions?.filter(({ released, claimed }) => !released && claimed?.uid == user?.uid).sort((p1, p2) => p1.date - p2.date), [submissions])
 
   const loadData = async () => {
     const response = await fetch(`${config.API_URL}/submissions`, {
@@ -34,7 +29,8 @@ const Home = (): JSX.Element => {
 
     if (response.ok) {
       const data = await response.json()
-      setSubmissions(Object.values(data))
+      const submissions = Object.values(data) as Submission[]
+      setSubmissions(submissions.filter(submission => !submission.team.disabled))
     }
   }
 
@@ -45,8 +41,6 @@ const Home = (): JSX.Element => {
     return () => { setMounted(false) }
   }, [])
 
-  socket?.on('new_submission', loadData)
-
   if (isLoading) return <PageLoading />
   if (!user) return <Unauthorized />
 
@@ -55,7 +49,7 @@ const Home = (): JSX.Element => {
     <Helmet><title>Abacus | Judging Dashboard</title></Helmet>
 
     <Block transparent size='xs-6'>
-      <h1>My Claimed Submissions</h1>
+      <h1><Link to='/judge/submissions?filter=my_claimed'>My Claimed Submissions</Link></h1>
       <Table>
         <Table.Header>
           <Table.Row>
@@ -68,7 +62,7 @@ const Home = (): JSX.Element => {
 
         <Table.Body>
           {myClaimedSubmissions && myClaimedSubmissions.length > 0 ?
-            myClaimedSubmissions.map(submission =>
+            myClaimedSubmissions.slice(0, 5).map(submission =>
               <Table.Row key={`my-claimed-${submission.sid}`}>
                 <Table.Cell>
                   <Link to={`/judge/submissions/${submission.sid}`}>{submission.sid.substring(0, 7)}</Link>
@@ -94,7 +88,7 @@ const Home = (): JSX.Element => {
 
 
     <Block transparent size='xs-6'>
-      <h1>Recently Graded Submissions</h1>
+      <h1><Link to='/judge/submissions?filter=recently_graded'>Recently Graded Submissions</Link></h1>
 
       <Table>
         <Table.Header>
@@ -108,7 +102,7 @@ const Home = (): JSX.Element => {
 
         <Table.Body>
           {recentSubmissions && recentSubmissions.length > 0 ?
-            recentSubmissions.map(submission =>
+            recentSubmissions.slice(0, 5).map(submission =>
               <Table.Row key={`recent-${submission.sid}`}>
                 <Table.Cell>
                   <Link to={`/judge/submissions/${submission.sid}`}>{submission.sid.substring(0, 7)}</Link>
@@ -134,7 +128,8 @@ const Home = (): JSX.Element => {
 
 
     <Block transparent size='xs-6'>
-      <h1>Pending Submissions</h1>
+      <h1><Link to='/judge/submissions?filter=pending'>Pending Submissions</Link></h1>
+
       <Table>
         <Table.Header>
           <Table.Row>
@@ -147,7 +142,7 @@ const Home = (): JSX.Element => {
 
         <Table.Body>
           {pendingSubmissions && pendingSubmissions.length > 0 ?
-            pendingSubmissions.map(submission =>
+            pendingSubmissions.slice(0, 5).map(submission =>
               <Table.Row key={`pending-${submission.sid}`}>
                 <Table.Cell>
                   <Link to={`/judge/submissions/${submission.sid}`}>{submission.sid.substring(0, 7)}</Link>
@@ -172,7 +167,7 @@ const Home = (): JSX.Element => {
     </Block>
 
     <Block transparent size='xs-6'>
-      <h1>Claimed Submissions</h1>
+      <h1><Link to='/judge/submissions?filter=other_claimed'>Claimed Submissions</Link></h1>
 
       <Table>
         <Table.Header>
@@ -187,7 +182,7 @@ const Home = (): JSX.Element => {
 
         <Table.Body>
           {claimedSubmissions && claimedSubmissions.length > 0 ?
-            claimedSubmissions.map(submission =>
+            claimedSubmissions.slice(0, 5).map(submission =>
               <Table.Row key={`claimed-${submission.sid}`}>
                 <Table.Cell>
                   <Link to={`/judge/submissions/${submission.sid}`}>{submission.sid.substring(0, 7)}</Link>

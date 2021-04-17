@@ -1,7 +1,7 @@
 import { User } from "abacus"
 import React, { ChangeEvent, useEffect, useState } from "react"
 import { useHistory, useParams } from "react-router-dom"
-import { Button, Form, Input, Menu, Select } from "semantic-ui-react"
+import { Button, Checkbox, CheckboxProps, Form, Input, Label, Menu, Select } from "semantic-ui-react"
 import config from 'environment'
 import { Block, NotFound, PageLoading } from "components"
 import { divisions, roles } from "utils"
@@ -29,6 +29,25 @@ const EditUser = (): JSX.Element => {
 
   const handleChange = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => setFormUser({ ...formUser, [name]: value })
   const handleSelectChange = (_: never, { name, value }: HTMLInputElement) => setFormUser({ ...formUser, [name]: value })
+  const handleCheckboxChange = async (_event: React.FormEvent<HTMLInputElement>, { checked }: CheckboxProps) => {
+    setSaving(true)
+    const response = await fetch(`${config.API_URL}/users`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.accessToken}`
+      },
+      body: JSON.stringify({ uid, disabled: checked })
+    })
+
+    if (response.ok) {
+      await loadUser()
+    } else {
+      setFormUser({ ...formUser, disabled: !checked })
+    }
+
+    setSaving(false)
+  }
 
   const handleSubmit = async () => {
     setSaving(true)
@@ -79,15 +98,26 @@ const EditUser = (): JSX.Element => {
 
   return <>
     <Helmet> <title>Abacus | Edit User</title> </Helmet>
-    <h1>{user.display_name}</h1>
+    <h1 className='justify-center'>
+      {user.display_name}
+      {user.disabled && <Label color='red'>Disabled</Label>}
+    </h1>
     <StatusMessage message={message} onDismiss={() => setMessage(undefined)} />
     <Menu attached='top' tabular>
       <Menu.Item active>User Info</Menu.Item>
     </Menu>
     <Block size='xs-12' menuAttached="top">
       <Form onSubmit={handleSubmit}>
-        <h2>Edit User</h2>
+        <div className='justify-center' style={{ justifyContent: 'space-between' }}>
+          <h2>Edit User</h2>
 
+          <Checkbox
+            label='Disabled'
+            name='disabled'
+            checked={formUser?.disabled}
+            onChange={handleCheckboxChange}
+            toggle />
+        </div>
         <Form.Field
           control={Input}
           onChange={handleChange}

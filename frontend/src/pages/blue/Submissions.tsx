@@ -1,13 +1,12 @@
 import { Submission } from "abacus";
 import React, { useContext, useEffect, useState } from "react";
 import Moment from "react-moment";
-import { Table } from "semantic-ui-react";
 import { Link } from "react-router-dom";
+import { Table } from "semantic-ui-react";
 import { Block, Countdown, PageLoading, Unauthorized } from "components";
-import config from 'environment'
 import { AppContext } from "context";
-import "components/Icons.scss";
 import { Helmet } from "react-helmet";
+import config from 'environment'
 
 const Submissions = (): JSX.Element => {
   const { user } = useContext(AppContext);
@@ -35,6 +34,7 @@ const Submissions = (): JSX.Element => {
 
   if (!user) return <Unauthorized />
   if (isLoading) return <PageLoading />
+  if (user?.division != 'blue' && user?.role != 'admin') return <Unauthorized />
 
   return <>
     <Helmet> <title>Abacus | Blue Submissions</title> </Helmet>

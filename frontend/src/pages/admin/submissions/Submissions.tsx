@@ -43,6 +43,7 @@ const Submissions = (): JSX.Element => {
   useEffect(() => {
     loadSubmissions().then(() => setLoading(false))
     socket?.on('new_submission', loadSubmissions)
+    socket?.on('update_submission', loadSubmissions)
     return () => setMounted(false)
   }, [])
 
@@ -59,7 +60,7 @@ const Submissions = (): JSX.Element => {
     setSubmissions(submissions.map(submission => ({ ...submission, checked: false })))
   }
 
-  const onFilterChange = () => setShowReleased(!showReleased)
+  const onReleaseChange = () => setShowReleased(!showReleased)
 
   const downloadSubmissions = () =>
     saveAs(new File([JSON.stringify(submissions, null, '\t')], 'submissions.json', { type: 'text/json;charset=utf-8' }))
@@ -68,7 +69,7 @@ const Submissions = (): JSX.Element => {
     setSubmissions(submissions.map(submission => submission.sid == id ? { ...submission, checked } : submission))
 
   const checkAll = ({ target: { checked } }: ChangeEvent<HTMLInputElement>) =>
-    setSubmissions(submissions.map(submission => (showReleased || !submission.released) ? { ...submission, checked } : submission))
+    setSubmissions(submissions.map(submission => (!submission.released || showReleased) ? { ...submission, checked } : submission))
 
   const deleteSelected = async () => {
     setDeleting(true)
@@ -88,7 +89,7 @@ const Submissions = (): JSX.Element => {
   }
 
   const filteredSubmissions = useMemo(() =>
-    submissions.filter((submission) => showReleased || !submission.released)
+    submissions.filter((submission) => (!submission.released || showReleased))
     , [submissions, showReleased])
 
   if (isLoading) return <PageLoading />
@@ -98,7 +99,7 @@ const Submissions = (): JSX.Element => {
     <Button content="Download Submissions" onClick={downloadSubmissions} />
     {submissions.filter(submission => submission.checked).length ?
       <Button content="Delete Selected" negative onClick={deleteSelected} loading={isDeleting} disabled={isDeleting} /> : <></>}
-    <Checkbox toggle label="Show Released" checked={showReleased} onClick={onFilterChange} />
+    <Checkbox toggle label="Show Released" checked={showReleased} onClick={onReleaseChange} />
 
     <Table singleLine>
       <Table.Header>
@@ -107,13 +108,10 @@ const Submissions = (): JSX.Element => {
           <Table.HeaderCell className='sortable' onClick={() => sort('sid')}>Submission ID</Table.HeaderCell>
           <Table.HeaderCell>Problem</Table.HeaderCell>
           <Table.HeaderCell>Team</Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('sub_no')}>Submission #</Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('language')}>Language</Table.HeaderCell>
           <Table.HeaderCell className='sortable' onClick={() => sort('status')}>Status</Table.HeaderCell>
           <Table.HeaderCell>Released</Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('runtime')}>Runtime</Table.HeaderCell>
+          <Table.HeaderCell>Flagged</Table.HeaderCell>
           <Table.HeaderCell className='sortable' onClick={() => sort('date')}>Time</Table.HeaderCell>
-          <Table.HeaderCell className='sortable' onClick={() => sort('score')}>Score</Table.HeaderCell>
         </Table.Row>
       </Table.Header>
       <Table.Body>
@@ -134,13 +132,13 @@ const Submissions = (): JSX.Element => {
                 <Link to={`/admin/submissions/${submission.sid}`}>{submission.sid.substring(0, 7)}</Link></Table.Cell>
               <Table.Cell><Link to={`/admin/problems/${submission.pid}`}>{submission.problem?.name} </Link></Table.Cell>
               <Table.Cell><Link to={`/admin/users/${submission.team.uid}`}>{submission.team.display_name}</Link></Table.Cell>
-              <Table.Cell>{submission.sub_no + 1}</Table.Cell>
-              <Table.Cell>{submission.language}</Table.Cell>
               <Table.Cell><span className={`status icn ${submission.status}`} /></Table.Cell>
               <Table.Cell>{submission.released ? <Label color='green' icon='check' content="Released" /> : <Label icon='lock' content="Held" />}</Table.Cell>
-              <Table.Cell>{Math.floor(submission.runtime || 0)}</Table.Cell>
+              <Table.Cell>
+                {submission.flagged ? <Label color='orange' icon='flag' content={`Flagged: ${submission.flagged.display_name}`} /> :
+                  <Label icon='cancel' content="Unflagged" />}
+              </Table.Cell>
               <Table.Cell><Moment fromNow date={submission.date * 1000} /> </Table.Cell>
-              <Table.Cell>{submission.score}</Table.Cell>
             </Table.Row>)}
       </Table.Body>
     </Table>

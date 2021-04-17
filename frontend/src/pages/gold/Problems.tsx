@@ -1,17 +1,19 @@
-import { Problem } from 'abacus'
+import { Problem, Submission } from 'abacus'
 import React, { useState, useEffect, useContext } from 'react'
 import { Table } from 'semantic-ui-react'
 import { Link } from 'react-router-dom'
-import { Block, Countdown, PageLoading } from 'components'
+import { Block, Countdown, PageLoading, Unauthorized } from 'components'
 import config from 'environment'
 import { AppContext } from 'context'
 import { Helmet } from 'react-helmet'
+import { userHome } from 'utils'
 
 const Problems = (): JSX.Element => {
-  const { settings } = useContext(AppContext)
+  const { user, settings } = useContext(AppContext)
   const [isMounted, setMounted] = useState(true)
   const [isLoading, setLoading] = useState(true)
   const [problems, setProblems] = useState<Problem[]>()
+  const [submissions, setSubmissions] = useState<{ [key: string]: Submission[] }>()
 
   const helmet = <Helmet> <title>Abacus | Gold Problems</title> </Helmet>
 
@@ -21,7 +23,7 @@ const Problems = (): JSX.Element => {
   }, [])
 
   const loadProblems = async () => {
-    const response = await fetch(`${config.API_URL}/problems?division=gold`, {
+    let response = await fetch(`${config.API_URL}/problems?division=gold`, {
       headers: {
         Authorization: `Bearer ${localStorage.accessToken}`
       }
@@ -32,11 +34,38 @@ const Problems = (): JSX.Element => {
     if (response.ok) {
       const problems = Object.values(await response.json()) as Problem[]
       setProblems(problems.sort((p1, p2) => p1.id.localeCompare(p2.id)))
+
+      response = await fetch(`${config.API_URL}/submissions?tid=${user?.uid}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.accessToken}`
+        }
+      })
+
+      if (!isMounted) return
+
+      if (response.ok) {
+        const submissions: { [key: string]: Submission[] } = {}
+        const userSubmissions: Submission[] = Object.values(await response.json())
+        for (const submission of userSubmissions) {
+          if (submissions[submission.pid] == undefined) submissions[submission.pid] = []
+          submissions[submission.pid].push(submission)
+        }
+        setSubmissions(submissions)
+      }
     }
     setLoading(false)
   }
 
-  if (!settings || new Date() < settings.start_date)
+  const latestSubmission = (pid: string) => {
+    if (!submissions || !(pid in submissions) || !user) return <></>
+    const subs = submissions[pid]
+    subs.sort((s1, s2) => s1.date - s2.date)
+    if (subs.length == 0) return <></>
+    const submission = subs[subs.length - 1]
+    return <Link to={`${userHome(user)}/submissions/${submission.sid}`}>{submission.sid.substring(0, 7)}</Link>
+  }
+
+  if (!settings || new Date() < settings.practice_start_date)
     return <>
       {helmet}
       <Countdown />
@@ -47,6 +76,7 @@ const Problems = (): JSX.Element => {
     </>
 
   if (isLoading) return <PageLoading />
+  if (user?.division != 'gold' && user?.role != 'admin') return <Unauthorized />
 
   return <>
     {helmet}
@@ -57,6 +87,7 @@ const Problems = (): JSX.Element => {
           <Table.Row>
             <Table.HeaderCell />
             <Table.HeaderCell>Problem Name</Table.HeaderCell>
+            <Table.HeaderCell>Last Submission</Table.HeaderCell>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -69,6 +100,9 @@ const Problems = (): JSX.Element => {
                 <Table.HeaderCell collapsing>{problem.id}</Table.HeaderCell>
                 <Table.Cell>
                   <Link to={`/gold/problems/${problem.id}`}>{problem.name}</Link>
+                </Table.Cell>
+                <Table.Cell>
+                  {latestSubmission(problem.pid)}
                 </Table.Cell>
               </Table.Row>
             ))}

@@ -18,6 +18,12 @@ const Help = (): JSX.Element => {
       </Block>
 
       <Block size="xs-12">
+        <h2>Tech Support</h2>
+        <h3>Phone: <a href="tel:4143755336">(414) 375-5336</a></h3>
+        <h3>Google Meet: <a href="https://meet.google.com/ifq-fcwf-unr">Join Here</a></h3>
+      </Block>
+
+      <Block size="xs-12">
         <h2>Frequently Asked Questions</h2>
         <Accordion fluid styled>
           <Accordion.Title
@@ -69,7 +75,7 @@ const Help = (): JSX.Element => {
               We know the accessibility to technology looks different for all competitors. The goal with Abacus was to create a platform that could be accessible
               to all regardless of their technology situation. Any student with a computer, a basic internet connection, and any
               <a href="https://browsehappy.com/" target="_blank" rel="noreferrer"> modern browser</a> can access and use Abacus. There is no
-              online code editor built into Abacus, but students can use a platform like <a href="https://www.repl.it" target="_blank" rel="noreferrer">replit</a>
+              online code editor built into Abacus, but students can use a platform like <a href="https://www.repl.it" target="_blank" rel="noreferrer">Replit</a>
               , <a href="https://www.jdoodle.com/" target="_blank" rel="noreferrer">JDoodle</a>
               , or <a href="https://www.programiz.com/" target="_blank" rel="noreferrer">Programiz</a>. They will just have to download or copy their code and upload it
               to Abacus for grading. For those who are more comfortable with a native IDE like <a href="https://www.eclipse.org/downloads/"

@@ -1,7 +1,7 @@
 import { User, Notification } from 'abacus';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import { Index, Admin, Blue, Gold, Judge } from 'pages'
+import { Index, Admin, Blue, Gold, Judge, Eagle, Proctor } from 'pages'
 import config from 'environment'
 import { Footer, Notifications } from 'components';
 import { v4 as uuidv4 } from 'uuid';
@@ -38,7 +38,9 @@ const App = (): JSX.Element => {
       setSettings({
         ...data,
         start_date: new Date(parseInt(data.start_date) * 1000),
-        end_date: new Date(parseInt(data.end_date) * 1000)
+        end_date: new Date(parseInt(data.end_date) * 1000),
+        practice_start_date: new Date(parseInt(data.practice_start_date) * 1000),
+        practice_end_date: new Date(parseInt(data.practice_end_date) * 1000),
       })
       return true
     }
@@ -90,6 +92,8 @@ const App = (): JSX.Element => {
           <Route path='/blue' component={Blue} />
           <Route path='/gold' component={Gold} />
           <Route path='/judge' component={Judge} />
+          <Route path='/eagle' component={Eagle} />
+          <Route path='/proctor' component={Proctor} />
           <Route path='/' component={Index} />
         </Switch>
       </Router>

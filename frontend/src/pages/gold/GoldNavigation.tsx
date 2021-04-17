@@ -11,8 +11,9 @@ const GoldNavigation = (): JSX.Element => {
   return (
     <Navigation className="gold-div">
       <Menu.Item as={NavLink} exact to="/gold" content="Home" />
+      <Menu.Item as={NavLink} to='/gold/rules' content="Rules" />
       {hasAccessTo() ? <Menu.Item as={NavLink} to="/gold/problems" content="Problems" /> : <></>}
-      {/* <Menu.Item as={NavLink} to="/gold/standings" content="Standings" /> */}
+      <Menu.Item as={NavLink} to="/gold/standings" content="Standings" />
       {hasAccessTo() ? <Menu.Item as={NavLink} to="/gold/submissions" content="Submissions" /> : <></>}
       {hasAccessTo() ? <Menu.Item as={NavLink} to="/gold/clarifications" content="Clarifications" /> : <></>}
     </Navigation>

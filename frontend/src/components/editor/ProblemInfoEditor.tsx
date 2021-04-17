@@ -7,16 +7,23 @@ const ProblemInfoEditor = ({ problem, setProblem }: ProblemStateProps): JSX.Elem
   if (!problem || !setProblem) return <></>
 
   const handleChange = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => setProblem({ ...problem, [name]: value })
-  const handleCheckChange = (event: FormEvent<HTMLInputElement>, { checked }: CheckboxProps) => setProblem({ ...problem, design_document: checked })
+  const handleCheckChange = (_event: FormEvent<HTMLInputElement>, { name, checked }: CheckboxProps) => name && setProblem({ ...problem, [name]: checked })
 
   const handleSelectChange = (_: never, { value }: HTMLInputElement) => {
     if (value == 'gold') {
       setProblem({
         ...problem,
         division: 'gold',
+        max_points: 0,
+        capped_points: false,
         skeletons: undefined,
         solutions: undefined,
         tests: undefined
+      })
+    } else if (value == 'eagle') {
+      setProblem({
+        ...problem,
+        division: 'eagle'
       })
     } else if (value == 'blue') {
 
@@ -53,12 +60,18 @@ const ProblemInfoEditor = ({ problem, setProblem }: ProblemStateProps): JSX.Elem
         required />
     </Form.Group>
 
-    {problem.division == 'gold' ? <Form.Checkbox label='Design Document' name='design_document' onChange={handleCheckChange} checked={problem.design_document} /> : <></>}
+    {problem.division == 'gold' ? <Form.Group style={{ display: 'flex', alignItems: 'center' }}>
+      <Form.Field label='Max Points' name='max_points' control={Input} onChange={handleChange} value={problem?.max_points} />
+      <Form.Checkbox label='Capped Points' name='capped_points' onChange={handleCheckChange} checked={problem?.capped_points} />
+      <Form.Checkbox label='Design Document' name='design_document' onChange={handleCheckChange} checked={problem.design_document} />
+    </Form.Group> : <></>}
 
-    {problem?.division == 'blue' ? <Form.Group widths='equal'>
+    <Form.Checkbox label='Practice Problem' name='practice' onChange={handleCheckChange} checked={problem.practice || false} />
+    {/* {problem?.division == 'blue' ? <Form.Group widths='equal'>
       <Form.Field label='Memory Limit' name='memory_limit' control={Input} onChange={handleChange} value={problem?.memory_limit || ''} />
       <Form.Field label='CPU Time Limit' name='cpu_time_limit' control={Input} onChange={handleChange} value={problem?.cpu_time_limit || ''} />
-    </Form.Group> : <></>}
+    </Form.Group>
+     : <></>} */}
   </Form>
 }
 

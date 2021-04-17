@@ -1,3 +1,4 @@
+import React from 'react';
 import { User } from "abacus";
 
 // Convert's stored language values in to syntax highlighter friendly values
@@ -17,7 +18,9 @@ export const userHome = (user: User): string => {
     case 'team':
       return `/${user.division}`
     case 'judge':
-      return `/judge`
+      return '/judge'
+    case 'proctor':
+      return '/proctor'
     default:
       return '/'
   }
@@ -25,7 +28,8 @@ export const userHome = (user: User): string => {
 
 export const divisions = [
   { key: 1, text: "Blue", value: 'blue' },
-  { key: 2, text: "Gold", value: 'gold' }
+  { key: 2, text: "Gold", value: 'gold' },
+  { key: 3, text: "Eagle", value: 'eagle' }
 ]
 
 export const roles = [
@@ -33,6 +37,11 @@ export const roles = [
   { key: 'proctor', text: 'Proctor', value: 'proctor' },
   { key: 'judge', text: 'Judge', value: 'judge' },
   { key: 'admin', text: 'Admin', value: 'admin' }
+]
+
+export const statuses = [
+  { key: 'accepted', text: 'Accepted', value: 'accepted', children: <span className='icn accepted status' /> },
+  { key: 'rejected', text: 'Wrong Answer', value: 'rejected', children: <span className='icn wrong_answer status' /> },
 ]
 
 export interface Language {

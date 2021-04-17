@@ -1,6 +1,6 @@
 import { User } from 'abacus'
 import React, { ChangeEvent, useState, useEffect, useContext } from 'react'
-import { Table, Button } from 'semantic-ui-react'
+import { Table, Button, Label } from 'semantic-ui-react'
 import { saveAs } from 'file-saver';
 import { Link } from 'react-router-dom'
 import config from 'environment'
@@ -208,7 +208,10 @@ const Users = (): JSX.Element => {
                 id={user.uid}
                 onChange={handleChange} />
             </Table.Cell>
-            <Table.Cell><Link to={`/admin/users/${user.uid}`}>{user.username}</Link></Table.Cell>
+            <Table.Cell className='space-between'>
+              <Link to={`/admin/users/${user.uid}`}>{user.username}</Link>
+              {user.disabled && <Label color='red' content="Disabled" />}
+            </Table.Cell>
             <Table.Cell>{user.role}</Table.Cell>
             <Table.Cell><DivisionLabel division={user.division} /></Table.Cell>
             <Table.Cell>{user.school}</Table.Cell>

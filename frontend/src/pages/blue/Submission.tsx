@@ -1,13 +1,15 @@
 import { Submission } from 'abacus'
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Block, Countdown, NotFound, PageLoading, SubmissionView } from 'components'
+import { Block, Countdown, NotFound, PageLoading, SubmissionView, Unauthorized } from 'components'
 import config from 'environment'
 import { Helmet } from 'react-helmet'
 import { Breadcrumb } from 'semantic-ui-react'
+import { AppContext } from 'context'
 
 const submission = (): JSX.Element => {
   const { sid } = useParams<{ sid: string }>()
+  const { user } = useContext(AppContext)
   const [submission, setSubmission] = useState<Submission>()
   const [isMounted, setMounted] = useState(true)
   const [isLoading, setLoading] = useState(true)
@@ -35,6 +37,7 @@ const submission = (): JSX.Element => {
 
   if (isLoading) return <PageLoading />
   if (!submission) return <NotFound />
+  if (user?.division != 'blue' && user?.role != 'admin') return <Unauthorized />
 
   return <>
     <Helmet> <title>Abacus | Blue Submission</title> </Helmet>

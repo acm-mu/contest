@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Breadcrumb, Button, Divider } from "semantic-ui-react";
 import MDEditor from "@uiw/react-md-editor";
-import { Block, Countdown, NotFound, ClarificationModal, PageLoading } from 'components'
+import { Block, Countdown, NotFound, ClarificationModal, PageLoading, Unauthorized } from 'components'
 import config from 'environment'
 import { AppContext } from "context";
 import "./Problem.scss";
@@ -11,7 +11,7 @@ import { Helmet } from "react-helmet";
 import { userHome } from "utils";
 
 const problem = (): JSX.Element => {
-  const { user } = useContext(AppContext);
+  const { user, settings } = useContext(AppContext);
   const [isLoading, setLoading] = useState(true)
   const [problem, setProblem] = useState<Problem>();
   const { pid } = useParams<{ pid: string }>()
@@ -60,6 +60,10 @@ const problem = (): JSX.Element => {
     setLoading(false)
   }
 
+
+  if (!settings || new Date() < settings.start_date)
+    if (user?.division != 'blue' && user?.role != 'admin') return <Unauthorized />
+
   if (isLoading) return <PageLoading />
   if (!problem) return <NotFound />
 
@@ -79,14 +83,15 @@ const problem = (): JSX.Element => {
       <MDEditor.Markdown source={problem.description || ''} />
     </Block>
     <Block size='xs-3' className='problem-panel'>
-      <Button
-        disabled={submissions?.filter(({ status, released }) => status == 'accepted' || status == 'pending' || !released).length !== 0}
-        as={Link}
-        to={`/blue/problems/${problem?.id}/submit`}
-        content="Submit"
-        icon="upload"
-        labelPosition='left'
-      />
+      {settings && new Date() < settings?.end_date ? <></> :
+        <Button
+          disabled={submissions?.filter(({ status, released }) => status == 'accepted' || status == 'pending' || !released).length !== 0}
+          as={Link}
+          to={`/blue/problems/${problem?.id}/submit`}
+          content="Submit"
+          icon="upload"
+          labelPosition='left'
+        />}
       <ClarificationModal
         title={`${problem.name} | `}
         context={{ type: 'pid', id: problem.pid }}

@@ -55,7 +55,7 @@ const LoginModal = ({ trigger, open }: LoginModalProps): JSX.Element => {
       open={isOpen}
       trigger={trigger}>
       <Modal.Description>
-        {error ? <StatusMessage message={{ type: 'error', message: error }} /> : <></>}
+        {error ? <StatusMessage style={{ margin: '0' }} message={{ type: 'error', message: error }} /> : <></>}
         <Form className='attached fluid segment' id="loginForm" onSubmit={handleSubmit}>
           <img src={fulllogo} width="300px" alt="Logo" />
           <Form.Input

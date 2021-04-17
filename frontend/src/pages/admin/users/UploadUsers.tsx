@@ -71,7 +71,7 @@ const UploadUsers = (): JSX.Element => {
     if (newUsers) {
       for (const user of newUsers.filter(u => u.checked)) {
         const response = await fetch(`${config.API_URL}/users`, {
-          method: 'PUT',
+          method: Object.keys(existingUsers || {}).includes(user.uid) ? 'PUT' : 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${localStorage.accessToken}`

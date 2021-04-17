@@ -61,11 +61,24 @@ export const schema: Record<string, ParamSchema> = {
     in: 'body',
     optional: true
   },
+  max_points: {
+    in: 'body',
+    optional: true
+  },
+  capped_points: {
+    in: 'body',
+    optional: true
+  },
   project_id: {
     in: 'body',
     optional: true
   },
   design_document: {
+    in: 'body',
+    isBoolean: true,
+    optional: true
+  },
+  practice: {
     in: 'body',
     isBoolean: true,
     optional: true

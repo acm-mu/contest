@@ -26,6 +26,8 @@ export const Index = (): JSX.Element => (
 );
 
 export { default as Gold } from './gold'
-export { default as Admin } from './admin'
 export { default as Blue } from './blue'
+export { default as Eagle } from './eagle'
+export { default as Admin } from './admin'
 export { default as Judge } from './judge'
+export { default as Proctor } from './proctor'

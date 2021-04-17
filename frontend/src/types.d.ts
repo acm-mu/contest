@@ -1,49 +1,63 @@
 declare module "abacus" {
   export interface Settings {
     competition_name: string;
+    practice_name: string;
     points_per_yes: number;
     points_per_no: number;
     points_per_compilation_error: number;
     points_per_minute: number;
     start_date: Date;
     end_date: Date;
+    practice_start_date: Date;
+    practice_end_date: Date;
   }
   export interface Submission {
     sid: string;
+    sub_no: number;
     date: number;
     division: string;
-    filename?: string;
-    filesize?: number;
-    source: string;
-    project_id?: number;
-    design_document?: string;
     language: string;
-    md5: string;
-    pid: string;
-    problem: Problem;
-    runtime?: number;
     released: boolean;
-    score: number;
-    status: string;
-    sub_no: number;
+    claimed?: User;
     tid: string;
     team?: Team;
-    tests?: Test[];
+    pid: string;
+    problem: Problem;
+    status: string;
+    score: number;
+    feedback?: string;
     claimed?: User;
+    flagged?: User;
+    viewed?: boolean;
+    //Blue
+    runtime?: number;
+    md5?: string;
+    filename?: string;
+    filesize?: number;
+    source?: string;
+    tests?: Test[];
+    //Gold
+    project_id?: number;
+    design_document?: string;
   }
   export interface Problem {
     pid: string;
+    practice?: boolean;
     id: string;
     division: string;
     name: string;
     description: string;
+    //Blue
     cpu_time_limit?: number;
     memory_limit?: number;
     tests?: Test[];
-    project_id?: string;
-    design_document?: boolean;
     skeletons?: Skeleton[];
     solutions?: Solution[];
+    //Gold
+    project_id?: string;
+    design_document?: boolean;
+    max_points?: number;
+    capped_points?: boolean;
   }
   export interface User {
     uid: string;
@@ -54,6 +68,7 @@ declare module "abacus" {
     display_name: string;
     division?: string;
     school?: string;
+    disabled?: boolean;
   }
   export interface Test {
     in: string;

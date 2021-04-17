@@ -8,8 +8,8 @@ const thirtyOneDays = [0, 2, 4, 6, 7, 9, 11] // January, March, May, July, Augus
 function timeRemaining(endtime: Date) {
   const now = new Date()
   let t = endtime.getTime() - now.getTime()
-  let months = ((endtime.getMonth() - now.getMonth()) + 12) % 12
-  if (endtime.getDate() <= now.getDate()) months--
+  const months = ((endtime.getMonth() - now.getMonth()) + 12) % 12
+  // if (endtime.getDate() <= now.getDate()) months--
   if (months > 0) {
     let deltaDays = 0
     for (let i = 0; i < months; i++) {

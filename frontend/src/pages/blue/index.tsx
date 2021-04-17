@@ -1,6 +1,6 @@
 import React from "react";
 import { Switch, Route } from 'react-router-dom'
-import { Container } from "semantic-ui-react";
+import { Container } from "semantic-ui-react"
 import { NotFound } from 'components'
 import BlueNavigation from './BlueNavigation'
 import Home from './Home'
@@ -10,8 +10,9 @@ import Standings from './Standings'
 import Submissions from './Submissions'
 import Submission from './Submission'
 import Submit from './Submit'
-import Clarifications from "../Clarifications";
-import Practice from "./practice";
+import Clarifications from "../Clarifications"
+import Practice from "./practice"
+import Rules from "./Rules"
 
 const Blue = (): JSX.Element => (
   <>
@@ -29,6 +30,7 @@ const Blue = (): JSX.Element => (
         <Route path='/blue/clarifications/:cid' component={Clarifications} />
         <Route path='/blue/clarifications' component={Clarifications} />
         <Route path='/blue/practice' component={Practice} />
+        <Route path='/blue/rules' component={Rules} />
         <Route component={NotFound} />
       </Switch>
     </Container>

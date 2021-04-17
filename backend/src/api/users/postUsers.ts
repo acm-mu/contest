@@ -15,6 +15,7 @@ export const schema: Record<string, ParamSchema> = {
   division: {
     in: 'body',
     isString: true,
+    optional: true,
     errorMessage: 'String division is not supplied'
   },
   school: {
@@ -54,6 +55,12 @@ export const postUsers = async (req: Request, res: Response) => {
   item.password = createHash('sha256').update(item.password).digest('hex')
 
   const users = await contest.scanItems('user', { args: { username: item.username } }) || {}
+
+  if ((item.role == 'team' || item.role == 'judge') && item.division == undefined) {
+    res.status(400).json({ message: 'String division is not provided!' })
+    return
+  }
+
   if (Object.values(users).length) {
     res.status(400).json({ message: 'Username is taken!' })
     return

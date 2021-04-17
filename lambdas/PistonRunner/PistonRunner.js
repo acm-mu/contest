@@ -63,7 +63,10 @@ exports.handler = async(event) => {
 
         // Calculate Score
         if (status == "accepted") {
-            const { start_date, points_per_no, points_per_yes, points_per_minute } = settings;
+            let { start_date, points_per_no, points_per_yes, points_per_minute } = settings;
+            if (problem.practice) {
+                start_date = settings.practice_start_date
+            }
             const minutes = (submission_date - start_date) / 60;
 
             submission.score = Math.floor((minutes * points_per_minute) + (points_per_no * submission.sub_no) + points_per_yes);

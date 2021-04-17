@@ -13,21 +13,17 @@
     // margin-bottom: 15px;
     color: #82868b;
     line-height: 1.4;
-
     div,
     span.legend-status,
     p.legend-label {
         display: inline-block;
         vertical-align: middle;
     }
-
     span.legend-status {
         margin-right: 5px;
     }
-
     div {
         padding-left: 14px;
-
         &:first-child {
             padding: 0;
         }
@@ -66,5 +62,14 @@
         text-align: center;
         background: #dcdcdc no-repeat center/50% url('/assets/standings/question.svg');
         text-align: center;
+    }
+}
+
+.ui.table {
+    td.score,
+    td.solved,
+    td.attempted,
+    td.pending {
+        font-size: 1.5rem;
     }
 }

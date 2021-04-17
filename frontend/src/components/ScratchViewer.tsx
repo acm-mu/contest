@@ -6,6 +6,7 @@ import "./ScratchViewer.scss"
 
 interface ScratchViewerProps {
   project_id?: string;
+  content?: JSX.Element;
 }
 
 interface ScratchProject {
@@ -24,7 +25,7 @@ interface ScratchProject {
   }
 }
 
-const ScratchViewer = ({ project_id }: ScratchViewerProps): JSX.Element => {
+const ScratchViewer = ({ project_id, content = <></> }: ScratchViewerProps): JSX.Element => {
   const [project, setProject] = useState<ScratchProject>()
 
   useEffect(() => {
@@ -52,19 +53,22 @@ const ScratchViewer = ({ project_id }: ScratchViewerProps): JSX.Element => {
         <iframe src={`https://scratch.mit.edu/projects/${project_id}/embed`} width="485" height="402" frameBorder="0" scrolling="no" allowFullScreen />
       </Grid.Column>
 
-      <Grid.Column className='scratch-info'>
-        {project ? <Segment>
-          <a target='_blank' rel='noreferrer' href={`https://scratch.mit.edu/projects/${project_id}`}><h2>{project.title}</h2> {project.author.username}</a>
-          <p>{project.description}</p>
+      <Grid.Column>
+        {project ? <Segment className='scratch-info'>
+          <div>
+            <a target='_blank' rel='noreferrer' href={`https://scratch.mit.edu/projects/${project_id}`}><h2>{project.title}</h2> {project.author.username}</a>
+            <p>{project.description}</p>
 
-          <div className='history'>
-            <span>Created<br /> <Label><Moment fromNow date={Date.parse(project.history.created)} /></Label></span>
-            <span>Modified<br /> <Label><Moment fromNow date={Date.parse(project.history.modified)} /></Label></span>
-            <span>Shared<br /> <Label><Moment fromNow date={Date.parse(project.history.shared)} /></Label></span>
+            <div className='history'>
+              <span>Created<br /> <Label><Moment fromNow date={Date.parse(project.history.created)} /></Label></span>
+              <span>Modified<br /> <Label><Moment fromNow date={Date.parse(project.history.modified)} /></Label></span>
+              <span>Shared<br /> <Label><Moment fromNow date={Date.parse(project.history.shared)} /></Label></span>
+            </div>
           </div>
         </Segment> : <></>}
+        {content}
       </Grid.Column>
-    </Grid.Row >
+    </Grid.Row>
   </Grid >
 }
 

@@ -10,25 +10,30 @@ const SkeletonsEditor = ({ problem, setProblem }: ProblemStateProps): JSX.Elemen
 
   const handleSkeletonClick = (event: MouseEvent, data: MenuItemProps) => setActiveSkeleton(data.tab)
 
-  const handleSkeletonChange = (language: string, value?: string) =>
-    setProblem({
-      ...problem,
-      skeletons: problem.skeletons?.map((skeleton) =>
-        language == skeleton.language ? {
-          ...skeleton,
-          source: value || ''
-        } : skeleton
-      )
-    })
+  const handleSkeletonChange = (language: string, value?: string) => {
+    if (setProblem !== undefined) {
+      setProblem({
+        ...problem,
+        skeletons: problem.skeletons?.map((skeleton) =>
+          language == skeleton.language ? {
+            ...skeleton,
+            source: value || ''
+          } : skeleton
+        )
+      })
+    }
+  }
 
-
-  const handleChange = (_event: ChangeEvent<HTMLInputElement>, { value }: InputOnChangeData) =>
-    setProblem({
-      ...problem,
-      skeletons: problem.skeletons?.map((skeleton) =>
-        activeSkeleton == skeleton.language ? { ...skeleton, file_name: value || '' } : skeleton
-      )
-    })
+  const handleChange = (_event: ChangeEvent<HTMLInputElement>, { value }: InputOnChangeData) => {
+    if (setProblem !== undefined) {
+      setProblem({
+        ...problem,
+        skeletons: problem.skeletons?.map((skeleton) =>
+          activeSkeleton == skeleton.language ? { ...skeleton, file_name: value || '' } : skeleton
+        )
+      })
+    }
+  }
 
   return <>
     <Menu>

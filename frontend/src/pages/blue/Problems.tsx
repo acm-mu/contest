@@ -2,7 +2,7 @@ import { Problem, Submission } from "abacus";
 import React, { useContext, useEffect, useState } from "react";
 import { Popup, Table } from "semantic-ui-react";
 import { Link } from "react-router-dom";
-import { Block, Countdown, PageLoading } from "components";
+import { Block, Countdown, PageLoading, Unauthorized } from "components";
 import config from 'environment'
 import { AppContext } from "context";
 import 'components/Table.scss'
@@ -25,7 +25,7 @@ const Problems = (): JSX.Element => {
   }, [])
 
   const loadProblems = async () => {
-    let response = await fetch(`${config.API_URL}/problems?type=list&division=blue`, {
+    let response = await fetch(`${config.API_URL}/problems?division=blue`, {
       headers: {
         Authorization: `Bearer ${localStorage.accessToken}`
       }
@@ -68,7 +68,7 @@ const Problems = (): JSX.Element => {
     return <Popup content={<div className={`icn status ${submission.status}`} />} trigger={<Link to={`${userHome(user)}/submissions/${submission.sid}`}>{submission.sid.substring(0, 7)}</Link>} />
   }
 
-  if (!settings || new Date() < settings.start_date)
+  if (!settings || new Date() < settings.practice_start_date)
     return <>
       {helmet}
       <Countdown />
@@ -78,9 +78,10 @@ const Problems = (): JSX.Element => {
       </Block>
     </>
 
+  if (!settings || new Date() < settings.start_date)
+    if (user?.division != 'blue' && user?.role != 'admin') return <Unauthorized />
 
   if (isLoading) return <PageLoading />
-
   return <>
     {helmet}
     <Countdown />

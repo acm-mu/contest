@@ -4,7 +4,7 @@ import { Clarification } from 'abacus';
 import config from '../environment'
 import Moment from 'react-moment';
 import './Clarifications.scss'
-import { Block, PageLoading } from 'components';
+import { Block, PageLoading, Unauthorized } from 'components';
 import { AppContext } from 'context';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
@@ -39,6 +39,8 @@ const Clarifications = (): JSX.Element => {
   useEffect(() => {
     loadClarifications()
   }, [])
+
+  if (!user || user.role === 'proctor') return <Unauthorized />
 
   const ClarificationsMenu = ({ clarifications }: { clarifications: Clarification[] }) => {
 

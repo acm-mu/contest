@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom'
 import { Table } from "semantic-ui-react";
 import { Block, Countdown, PageLoading, StatusMessage } from "components";
 import config from 'environment'
-import "./Standings.scss";
+import "../Standings.scss";
 import { AppContext, SocketContext } from "context";
 import { Helmet } from "react-helmet";
 
 const Standings = (): JSX.Element => {
-  const { settings } = useContext(AppContext);
+  const { user, settings } = useContext(AppContext);
   const socket = useContext(SocketContext)
   const [problems, setProblems] = useState<Problem[]>();
   const [standings, setStandings] = useState<StandingsUser[]>();
@@ -19,17 +19,18 @@ const Standings = (): JSX.Element => {
   const helmet = <Helmet> <title>Abacus | Blue Standings</title> </Helmet>
 
   const loadData = async () => {
-    let response = await fetch(`${config.API_URL}/problems?division=blue`)
+    const response = await fetch(`${config.API_URL}/standings?division=blue`)
 
-    let problems = Object.values(await response.json()) as Problem[]
-    problems = problems.sort((a, b) => a.id.localeCompare(b.id))
+    const data = await response.json()
 
     if (!isMounted) return
-    setProblems(problems)
 
-    response = await fetch(`${config.API_URL}/standings`)
+    setStandings(data.standings)
 
-    setStandings(await response.json())
+    if (data.problems) {
+      const problems = Object.values(data.problems) as Problem[]
+      setProblems(problems.sort((p1, p2) => p1.id.localeCompare(p2.id)))
+    }
 
     setLoading(false)
   }
@@ -41,11 +42,11 @@ const Standings = (): JSX.Element => {
     return () => { setMounted(false) }
   }, []);
 
-  if (!settings || new Date() < settings.start_date)
+  if (!settings || new Date() < settings.practice_start_date)
     return <>
       {helmet}
       <Countdown />
-      <Block center size='xs-12'>
+      <Block size='xs-12'>
         <h1>Competition not yet started!</h1>
         <p>Standings will become available when the competition begins, and submissions start rolling in.</p>
       </Block>
@@ -90,14 +91,17 @@ const Standings = (): JSX.Element => {
             <Table.HeaderCell collapsing>TIME</Table.HeaderCell>
             {problems.map(problem =>
               <Table.HeaderCell key={problem.id} collapsing>
-                <Link to={`/blue/problems/${problem.id}`}>{problem.id}</Link>
+                {user?.division === 'blue' || user?.role === 'admin' ?
+                  <Link to={`/blue/problems/${problem.id}`}>{problem.id}</Link> :
+                  problem.id
+                }
               </Table.HeaderCell>
             )}
           </Table.Row>
         </Table.Header>
         <Table.Body>
           {standings.map((team, index) => (
-            <Table.Row key={team.uid}>
+            <Table.Row key={team.uid} warning={team.uid == user?.uid} style={{ fontWeight: team.uid == user?.uid ? 'bold' : 'normal' }}>
               <Table.Cell collapsing>{index + 1}</Table.Cell>
               <Table.Cell>{team.display_name}</Table.Cell>
               <Table.Cell>{team.solved}</Table.Cell>
@@ -117,7 +121,7 @@ const Standings = (): JSX.Element => {
                       <Table.Cell key={`${team.uid}-${index}`} className="pending">
                         {problem.submissions.length}
                         <br />
-                            --
+                        <small>--</small>
                       </Table.Cell>
                     );
                   } else if (problem.submissions.length) {
@@ -125,7 +129,7 @@ const Standings = (): JSX.Element => {
                       <Table.Cell key={`${team.uid}-${index}`} className="attempted">
                         {problem.submissions.length}
                         <br />
-                            --
+                        <small>--</small>
                       </Table.Cell>
                     );
                   } else {
