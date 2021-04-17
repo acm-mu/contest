@@ -37,12 +37,16 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
   res.sendStatus(403)
 }
 
-export const hasRole = (role: string): (req: Request, res: Response, next: NextFunction) => Promise<void> => {
+export const userHasRole = (user: User | undefined, role: string) => {
   const roleRank = ['team', 'proctor', 'judge', 'admin']
+  return user && roleRank.indexOf(user.role) >= roleRank.indexOf(role)
+}
+
+export const hasRole = (role: string): (req: Request, res: Response, next: NextFunction) => Promise<void> => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = await authenticate(req, res)
-      if (user && roleRank.indexOf(user.role) >= roleRank.indexOf(role)) {
+      if (userHasRole(user, role)) {
         next()
         return
       }

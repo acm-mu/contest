@@ -42,6 +42,11 @@ export const schema: Record<string, ParamSchema> = {
     in: 'body',
     isString: true,
     optional: true
+  },
+  disabled: {
+    in: 'body',
+    isBoolean: true,
+    optional: true
   }
 }
 

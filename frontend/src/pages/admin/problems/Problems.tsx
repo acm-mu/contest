@@ -151,7 +151,7 @@ const Problems = (): JSX.Element => {
               sorted={column === 'name' ? direction : undefined}
               onClick={() => sort('name')}
               content="Problem Name" />
-            <Table.HeaderCell># of Tests</Table.HeaderCell>
+            <Table.HeaderCell>{activeDivision == 'blue' ? "# of Tests" : "Max Points"}</Table.HeaderCell>
             <Table.HeaderCell>Solved Attempts</Table.HeaderCell>
             <Table.HeaderCell>Total Attempts</Table.HeaderCell>
           </Table.Row>
@@ -173,7 +173,7 @@ const Problems = (): JSX.Element => {
                 <Table.Cell><Link to={`/admin/problems/${problem.pid}`}>{problem.id}</Link></Table.Cell>
                 <Table.Cell><DivisionLabel division={problem.division} /></Table.Cell>
                 <Table.Cell><Link to={`/admin/problems/${problem.pid}`}>{problem.name}</Link></Table.Cell>
-                <Table.Cell>{problem.tests?.length}</Table.Cell>
+                <Table.Cell>{activeDivision == 'blue' ? problem.tests?.length : problem.max_points}</Table.Cell>
                 {submissions && <>
                   <Table.Cell>{problem.pid in submissions ? submissions[problem.pid].filter((p) => p.score > 0).length : 0}</Table.Cell>
                   <Table.Cell>{problem.pid in submissions ? submissions[problem.pid].length : 0}</Table.Cell>

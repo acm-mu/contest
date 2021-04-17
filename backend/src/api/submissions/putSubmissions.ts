@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { matchedData, ParamSchema, validationResult } from "express-validator";
 import { io, sendNotification } from '../../server';
 import contest from '../../abacus/contest';
+import { Submission } from 'abacus';
 
 export const schema: Record<string, ParamSchema> = {
   sid: {
@@ -60,6 +61,23 @@ export const schema: Record<string, ParamSchema> = {
   claimed: {
     in: 'body',
     optional: true
+  },
+  score: {
+    in: 'body',
+    optional: true
+  },
+  flagged: {
+    in: 'body',
+    optional: true
+  },
+  viewed: {
+    in: 'body',
+    isBoolean: true,
+    optional: true
+  },
+  feedback: {
+    in: 'body',
+    optional: true
   }
 }
 
@@ -85,7 +103,17 @@ export const putSubmissions = async (req: Request, res: Response) => {
     return
   }
   const item = matchedData(req)
+
   try {
+    const submission = await contest.getItem('submission', { sid: item.sid }) as unknown as Submission
+
+    if (item.claimed !== undefined && submission.claimed !== undefined) { // Trying to change a claimed submission
+      if (item.claimed !== null) {
+        res.status(403).send({ message: "This submission is already claimed!" })
+        return
+      }
+    }
+
     await contest.updateItem('submission', { sid: item.sid }, item)
 
     if (item.released == true) notifyTeam(item)

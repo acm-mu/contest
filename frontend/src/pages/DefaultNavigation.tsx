@@ -21,7 +21,7 @@ const DefaultNavigation = (): JSX.Element => {
     <Menu.Item as={NavLink} to="/about">About</Menu.Item>
     <Menu.Item as={NavLink} to="/help">Help</Menu.Item>
 
-    {user ? <Menu.Item as={NavLink} to='/clarifications' content="Clarifications" /> : <></>}
+    {user && user.role != 'proctor' ? <Menu.Item as={NavLink} to='/clarifications' content="Clarifications" /> : <></>}
   </Navigation>
 }
 

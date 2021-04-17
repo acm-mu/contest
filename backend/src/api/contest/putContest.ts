@@ -10,6 +10,12 @@ export const schema: Record<string, ParamSchema> = {
     isString: true,
     errorMessage: 'String competition_name is not supplied'
   },
+  practice_name: {
+    in: 'body',
+    notEmpty: true,
+    isString: true,
+    errorMessage: 'String practice_name is not supplied'
+  },
   points_per_yes: {
     in: 'body',
     notEmpty: true,
@@ -39,6 +45,18 @@ export const schema: Record<string, ParamSchema> = {
     notEmpty: true,
     isNumeric: true,
     errorMessage: 'Number end_date is not supplied'
+  },
+  practice_start_date: {
+    in: 'body',
+    notEmpty: true,
+    isNumeric: true,
+    errorMessage: 'Number practice_start_date is not supplied'
+  },
+  practice_end_date: {
+    in: 'body',
+    notEmpty: true,
+    isNumeric: true,
+    errorMessage: 'Number practice_end_date is not supplied'
   }
 }
 
@@ -58,6 +76,14 @@ export const putContest = async (req: Request, res: Response) => {
 
   if (endDate <= startDate) {
     res.status(400).send({ message: "End date cannot be before start date!" })
+    return
+  }
+
+  const practiceStartDate = new Date(settings.practice_start_date * 1000)
+  const practiceEndDate = new Date(settings.practice_end_date * 1000)
+
+  if (practiceEndDate <= practiceStartDate) {
+    res.status(400).send({ message: "Practice end date cannot be before start date!" })
     return
   }
 

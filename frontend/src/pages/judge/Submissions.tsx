@@ -26,6 +26,7 @@ const Submissions = (): JSX.Element => {
   const [isDeleting, setDeleting] = useState(false)
   const [isClaiming, setClaiming] = useState<{ [key: string]: boolean }>({})
   const [showReleased, setShowReleased] = useState(false)
+  const filter = (new URLSearchParams(window.location.search)).get('filter')
 
   const { user } = useContext(AppContext)
 
@@ -60,7 +61,7 @@ const Submissions = (): JSX.Element => {
 
     if (!isMounted) return
 
-    setSubmissions(submissions.map(submission => ({ ...submission, checked: false })))
+    setSubmissions(submissions.filter(submission => !submission.team.disabled).map(submission => ({ ...submission, checked: false })))
   }
 
   const onFilterChange = () => setShowReleased(!showReleased)
@@ -122,17 +123,33 @@ const Submissions = (): JSX.Element => {
     setClaiming({ ...isClaiming, [sid]: false })
   }
 
+  const urlFilter = ({ claimed }: Submission) => {
+    switch (filter) {
+      case 'my_claimed':
+        return !showReleased && claimed?.uid == user?.uid
+      case 'other_claimed':
+        return !showReleased && claimed !== undefined && claimed?.uid != user?.uid
+      case 'pending':
+        return !showReleased && !claimed
+      case 'recently_graded':
+        return !showReleased
+      default: return true
+    }
+  }
+
   const filteredSubmissions = useMemo(() =>
-    submissions.filter((submission) => showReleased || !submission.released)
-    , [submissions, showReleased])
+    submissions.filter((submission) => showReleased || !submission.released && urlFilter(submission))
+    , [submissions, showReleased, filter])
 
   if (isLoading) return <PageLoading />
 
   return <>
     <Helmet><title>Abacus | Judge Submissions</title></Helmet>
+
     <Button content="Download Submissions" onClick={downloadSubmissions} />
     {submissions.filter(submission => submission.checked).length ?
       <Button content="Delete Selected" negative onClick={deleteSelected} loading={isDeleting} disabled={isDeleting} /> : <></>}
+    {filter && <Button as={Link} to='/judge/submissions'>Clear Filter: <i>{filter}</i></Button>}
     <Checkbox toggle label="Show Released" checked={showReleased} onClick={onFilterChange} />
 
     <Table singleLine sortable>

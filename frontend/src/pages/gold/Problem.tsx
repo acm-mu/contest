@@ -1,54 +1,61 @@
-import { Problem, Submission } from 'abacus'
-import React, { useContext, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Problem, Submission } from "abacus";
+import React, { useState, useEffect, useContext, useMemo } from "react";
+import { Link, useParams } from "react-router-dom";
+import { Breadcrumb, Button, Message } from "semantic-ui-react";
+import MDEditor from "@uiw/react-md-editor";
 import { Block, Countdown, NotFound, ClarificationModal, PageLoading, Unauthorized } from 'components'
-import { Breadcrumb, Button, Message } from 'semantic-ui-react'
-import MDEditor from '@uiw/react-md-editor'
-import config from "environment"
-import { AppContext } from 'context'
-import { Helmet } from 'react-helmet'
+import config from 'environment'
+import { AppContext } from "context";
+import { Helmet } from "react-helmet";
+import { userHome } from "utils";
 
 const problem = (): JSX.Element => {
   const { user } = useContext(AppContext)
   const [isLoading, setLoading] = useState(true)
   const [problem, setProblem] = useState<Problem>()
-  const [submissions, setSubmissions] = useState<Submission[]>()
   const { pid } = useParams<{ pid: string }>()
+
+  const [submissions, setSubmissions] = useState<Submission[]>()
+  const latestSubmission = useMemo(() => {
+    if (!submissions?.length || !user) return <></>
+    const { sid } = submissions[submissions.length - 1]
+    return <p><b>Last Submission:</b>  <Link to={`${userHome(user)}/submissions/${sid}`}>{sid.substring(0, 7)}</Link></p>
+  }, [submissions])
 
   const [isMounted, setMounted] = useState(true)
 
   useEffect(() => {
     loadProblem().then(() => {
       setLoading(false)
-      if (user) loadSubmissions()
     })
     return () => { setMounted(false) }
   }, [])
 
   const loadProblem = async () => {
-    const response = await fetch(`${config.API_URL}/problems?division=gold&id=${pid}&columns=description,project_id,design_document`, {
+    let response = await fetch(`${config.API_URL}/problems?division=gold&id=${pid}&columns=description,project_id,design_document`, {
       headers: {
         Authorization: `Bearer ${localStorage.accessToken}`
       }
     })
 
-    if (!response.ok || !isMounted) return
+    if (!isMounted) return
 
-    setProblem(Object.values(await response.json())[0] as Problem)
-  }
+    if (response.ok) {
+      const problem = Object.values(await response.json())[0] as Problem
+      setProblem(problem)
 
-  const loadSubmissions = async () => {
-    if (!problem) return
+      response = await fetch(`${config.API_URL}/submissions?tid=${user?.uid}&pid=${problem?.pid}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.accessToken}`
+        }
+      })
 
-    const response = await fetch(`${config.API_URL}/submissions?tid=${user?.uid}&pid=${problem?.pid}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.accessToken}`
+      if (!isMounted) return
+
+      if (response.ok) {
+        setSubmissions(Object.values(await response.json()))
       }
-    })
-
-    if (!response.ok || !isMounted) return
-
-    setSubmissions(Object.values(await response.json()))
+    }
   }
 
   if (isLoading) return <PageLoading />
@@ -74,14 +81,13 @@ const problem = (): JSX.Element => {
     </Block>
 
     <Block size='xs-3' className='problem-panel'>
-      {!submissions || submissions?.filter((e) => e.status == "accepted").length == 0 ?
-        <Button
-          as={Link}
-          to={`/gold/problems/${problem?.id}/submit`}
-          content="Submit"
-          icon="upload"
-        /> : <></>
-      }
+      <Button
+        disabled={submissions?.filter(({ status, released }) => status == 'pending' || !released).length !== 0}
+        as={Link}
+        to={`/gold/problems/${problem?.id}/submit`}
+        content="Submit"
+        icon="upload"
+      />
       <ClarificationModal
         title={`${problem.name} | `}
         context={{ type: 'pid', id: problem.pid }}
@@ -99,6 +105,7 @@ const problem = (): JSX.Element => {
             icon='linkify'
           />
         </a> : <Message warning><b>Note:</b> A project template is not provided for this problem.</Message>}
+      {latestSubmission}
     </Block>
   </>
 }

@@ -5,11 +5,12 @@ import SubmissionContext from './SubmissionContext';
 
 interface SubmissionProps {
   submission: Submission;
-  rerunning?: boolean
+  setSubmission?: React.Dispatch<React.SetStateAction<Submission | undefined>>;
+  rerunning?: boolean;
 }
 
-const SubmissionView = ({ submission, rerunning }: SubmissionProps): JSX.Element =>
-  <SubmissionContext.Provider value={{ submission, rerunning }}>
+const SubmissionView = ({ submission, setSubmission, rerunning }: SubmissionProps): JSX.Element =>
+  <SubmissionContext.Provider value={{ submission, setSubmission, rerunning }}>
     {submission.division == 'blue' && <BlueSubmission />}
     {submission.division == 'gold' && <GoldSubmission />}
   </SubmissionContext.Provider>

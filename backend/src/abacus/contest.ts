@@ -33,7 +33,7 @@ class ContestService {
     })
   }
 
-  save_settings(settings: Settings): Promise<BatchWriteItemOutput> {
+  save_settings(settings: Record<string, number | string>): Promise<BatchWriteItemOutput> {
     return new Promise((resolve, reject) => {
       this.db.batchWrite({
         RequestItems: {
@@ -177,9 +177,9 @@ class ContestService {
   }
 }
 
-const transpose = (itemList: ItemList | undefined, key: string): { [key: string]: any } => itemList ? Object.assign({}, ...itemList.map((obj: any) => ({ [obj[key]]: obj }))) : {}
+export const transpose = (itemList: ItemList | undefined, key: string): { [key: string]: any } => itemList ? Object.assign({}, ...itemList.map((obj: any) => ({ [obj[key]]: obj }))) : {}
 
-const makeJSON = (itemList: ItemList, columns: string[] = []): string => {
+export const makeJSON = (itemList: ItemList, columns: string[] = []): string => {
   itemList.map((e) => {
     Object.keys(e).forEach((key) => {
       if (!columns.includes(key)) {
@@ -191,4 +191,3 @@ const makeJSON = (itemList: ItemList, columns: string[] = []): string => {
 }
 
 export default new ContestService()
-export { transpose, makeJSON };

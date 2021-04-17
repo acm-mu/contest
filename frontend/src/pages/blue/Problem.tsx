@@ -11,7 +11,7 @@ import { Helmet } from "react-helmet";
 import { userHome } from "utils";
 
 const problem = (): JSX.Element => {
-  const { user } = useContext(AppContext);
+  const { user, settings } = useContext(AppContext);
   const [isLoading, setLoading] = useState(true)
   const [problem, setProblem] = useState<Problem>();
   const { pid } = useParams<{ pid: string }>()
@@ -60,9 +60,12 @@ const problem = (): JSX.Element => {
     setLoading(false)
   }
 
+
+  if (!settings || new Date() < settings.start_date)
+    if (user?.division != 'blue' && user?.role != 'admin') return <Unauthorized />
+
   if (isLoading) return <PageLoading />
   if (!problem) return <NotFound />
-  if (user?.division != 'blue' && user?.role != 'admin') return <Unauthorized />
 
   return <>
     <Helmet> <title>Abacus | {problem.name}</title> </Helmet>
@@ -80,14 +83,15 @@ const problem = (): JSX.Element => {
       <MDEditor.Markdown source={problem.description || ''} />
     </Block>
     <Block size='xs-3' className='problem-panel'>
-      <Button
-        disabled={submissions?.filter(({ status, released }) => status == 'accepted' || status == 'pending' || !released).length !== 0}
-        as={Link}
-        to={`/blue/problems/${problem?.id}/submit`}
-        content="Submit"
-        icon="upload"
-        labelPosition='left'
-      />
+      {settings && new Date() < settings?.end_date ? <></> :
+        <Button
+          disabled={submissions?.filter(({ status, released }) => status == 'accepted' || status == 'pending' || !released).length !== 0}
+          as={Link}
+          to={`/blue/problems/${problem?.id}/submit`}
+          content="Submit"
+          icon="upload"
+          labelPosition='left'
+        />}
       <ClarificationModal
         title={`${problem.name} | `}
         context={{ type: 'pid', id: problem.pid }}

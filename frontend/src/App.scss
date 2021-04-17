@@ -79,6 +79,10 @@ h6 {
     border-bottom-color: var(--teal);
 }
 
+.ui.fixed.menu.inverted.proctor-div {
+    border-bottom-color: var(--sky-blue);
+}
+
 .ui.fixed.menu.inverted.admin-div {
     border-bottom-color: #aaa;
 }
@@ -140,4 +144,14 @@ a.button {
 .ui.checkbox {
     display: flex;
     align-items: center;
+}
+
+.justify-center {
+    display: flex;
+    align-items: center;
+}
+
+.space-between {
+    display: flex;
+    justify-content: space-between;
 }

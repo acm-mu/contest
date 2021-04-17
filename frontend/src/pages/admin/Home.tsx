@@ -1,65 +1,43 @@
 
-import { Problem, Submission } from 'abacus'
+import { Submission } from 'abacus'
 import React, { useContext, useEffect, useMemo, useState } from 'react'
-import { LineChart, PieChart } from '@toast-ui/react-chart'
-import { AppContext } from 'context'
-import { Block } from 'components'
+import { PieChart } from '@toast-ui/react-chart'
+import { AppContext, SocketContext } from 'context'
+import { Block, PageLoading } from 'components'
 import config from 'environment'
 import '@toast-ui/chart/dist/toastui-chart.min.css'
 import { Helmet } from 'react-helmet'
 import moment from 'moment'
+import { Table } from 'semantic-ui-react'
+import { Link } from 'react-router-dom'
 
 const Home = (): JSX.Element => {
+  const socket = useContext(SocketContext)
+  const [isLoading, setLoading] = useState(true)
   const [submissions, setSubmissions] = useState<Submission[]>()
-  const [problems, setProblems] = useState<Problem[]>([])
   const [isMounted, setMounted] = useState(true)
 
-  const { settings } = useContext(AppContext)
+  const { user, settings } = useContext(AppContext)
 
-  const fetchData = async () => {
-    const getProblems = await fetch(`${config.API_URL}/problems`, { headers: { Authorization: `Bearer ${localStorage.accessToken}` } })
-
-    if (!isMounted) return
-
-    setProblems(Object.values(await getProblems.json()))
-
+  const loadSubmissions = async () => {
     const getSubmissions = await fetch(`${config.API_URL}/submissions`, { headers: { Authorization: `Bearer ${localStorage.accessToken}` } })
 
     if (!isMounted) return
 
     const subs: Submission[] = Object.values(await getSubmissions.json())
-    setSubmissions(subs.filter(({ date }) => date * 1000 > Number(settings?.start_date) && date * 1000 < Number(settings?.end_date)))
+    setSubmissions(subs.filter(({ team, date }) => !team.disabled && date * 1000 > Number(settings?.start_date) && date * 1000 < Number(settings?.end_date)))
+    setLoading(false)
   }
 
   useEffect(() => {
-    fetchData()
-    const updateInterval = setInterval(fetchData, 5 * 60 * 1000);
-    return () => {
-      setMounted(false)
-      clearInterval(updateInterval)
-    }
+    loadSubmissions().then(() => setLoading(false))
+    socket?.on('new_submission', loadSubmissions)
+    socket?.on('update_submission', loadSubmissions)
+    socket?.on('delete_submission', loadSubmissions)
+    return () => setMounted(false)
   }, []);
 
-  const timeSubmissions = useMemo(() => {
-    const numBuckets = Math.ceil((Number(settings?.end_date) - Number(settings?.start_date)) / (30 * 60 * 1000))
-
-    const data: { [key: string]: { name: string, data: number[] } } = Object.assign({}, ...problems.map(problem => ({
-      [problem.pid]: {
-        data: [...Array(numBuckets + 1)].map(() => 0),
-        name: problem.name
-      }
-    })));
-
-    if (submissions) {
-      for (const sub of submissions) {
-        const startDate = Number(settings?.start_date) / 1000 || 0
-        const timeBin = Math.floor((sub.date - startDate) / (1800));
-        data[sub.problem.pid].data[timeBin]++;
-      }
-    }
-    return data
-
-  }, [submissions])
+  const flaggedSubmissions = useMemo(() => submissions?.filter(({ flagged }) => flagged !== undefined), [submissions])
 
   const breakdownData = useMemo(() => {
     const statuses: { [key: string]: { name: string, data: number } } = {};
@@ -86,11 +64,6 @@ const Home = (): JSX.Element => {
     }
   }
 
-  const timelineData = {
-    categories,
-    series: Object.values(timeSubmissions)
-  };
-
   const breakdownOptions = {
     theme: {
       series: {
@@ -115,68 +88,7 @@ const Home = (): JSX.Element => {
     }
   };
 
-  const timelineOptions = {
-    chart: {
-      width: 'vw',
-      height: 450,
-      animation: true
-    },
-    series: {
-      stack: {
-        type: 'normal'
-      },
-      selectable: true,
-      zoomable: true,
-      eventDetectType: 'grouped',
-    },
-    legend: {
-      align: 'bottom',
-    }
-    // chart?: {
-    //   // ...
-    // },
-    // xAxis?: {
-    //   // ...
-    // },
-    // yAxis?: {
-    //   // ...
-    // },
-    // legend?: {
-    //   // ...
-    // },
-    // exportMenu?: {
-    //   // ...
-    // },
-    // tooltip?: {
-    //   // ...
-    // },
-    // plot?: {
-    //   // ...
-    // },
-    // responsive?: {
-    //   // ...
-    // },
-    // theme?: {
-    //   // More explanations in the `theme` chapter.
-    // },
-    // series?: {
-    //   showDot?: boolean;
-    //   spline?: boolean;
-    //   zoomable?: boolean;
-    //   eventDetectType?: 'near' | 'nearest' | 'grouped';
-    //   shift?: boolean;
-    //   stack?: boolean | {
-    //     type: 'normal' | 'percent';
-    //   }
-    //   dataLabels?: {
-    //     visible?: boolean;
-    //     anchor?: 'center' | 'start' | 'end' | 'auto' | 'outer';
-    //     offsetX?: number;
-    //     offsetY?: number;
-    //     formatter?: (value) => string;
-    //   }
-    // }
-  };
+  if (isLoading) return <PageLoading />
 
   return <>
     <Helmet> <title>Abacus | Admin</title> </Helmet>
@@ -185,17 +97,7 @@ const Home = (): JSX.Element => {
     </Block>
 
     <Block size='xs-6'>
-      <h2>Submission Timeline</h2>
-      {submissions?.length ?
-        <LineChart
-          data={timelineData}
-          options={timelineOptions}
-        />
-        : <p>There are not any submissions yet!</p>}
-    </Block>
-
-    <Block size='xs-6'>
-      <h2>Submission Breakdown</h2>
+      <h1>Submission Breakdown</h1>
       {submissions?.length ?
 
         <PieChart
@@ -203,6 +105,44 @@ const Home = (): JSX.Element => {
           options={breakdownOptions}
         />
         : <p>There are not any submissions yet!</p>}
+    </Block>
+
+    <Block size='xs-6'>
+      <h1>Flagged Submissions</h1>
+      <Table>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell content="Submission" />
+            <Table.HeaderCell content="User" />
+            <Table.HeaderCell content="Problem" />
+            <Table.HeaderCell content="Language" />
+          </Table.Row>
+        </Table.Header>
+
+        <Table.Body>
+          {flaggedSubmissions && flaggedSubmissions.length > 0 ?
+            flaggedSubmissions.map(submission =>
+              <Table.Row key={`flagged-${submission.sid}`}>
+                <Table.Cell>
+                  <Link to={`/${user?.role}/submissions/${submission.sid}`}>{submission.sid.substring(0, 7)}</Link>
+                </Table.Cell>
+                <Table.Cell>
+                  <Link to={`/${user?.role}/teams/${submission.tid}`}>{submission.team.display_name}</Link>
+                </Table.Cell>
+                <Table.Cell>
+                  <Link to={`/${user?.role}/problems/${submission.pid}`}>{submission.problem.name}</Link>
+                </Table.Cell>
+                <Table.Cell>
+                  {submission.language}
+                </Table.Cell>
+              </Table.Row>
+            ) :
+            <Table.Row>
+              <Table.Cell colSpan={'100%'}>There are no flagged submissions.</Table.Cell>
+            </Table.Row>
+          }
+        </Table.Body>
+      </Table>
     </Block>
   </>
 }

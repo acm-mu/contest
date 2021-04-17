@@ -1,12 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Route, Switch } from 'react-router';
+import { BrowserRouter } from 'react-router-dom';
+import { IAmATeapot } from 'components/eastereggs/IAmATeapot';
 import 'semantic-ui-css/semantic.min.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   // <React.StrictMode> Disable StrictMode because components from semantic-ui-react do not comply and throw errors
-  <App />,
+  <BrowserRouter>
+    <Switch>
+      <Route path='/coffee' component={IAmATeapot} />
+      <Route component={App} />
+    </Switch>
+  </BrowserRouter>,
   // </React.StrictMode>,
   document.getElementById("root")
 );

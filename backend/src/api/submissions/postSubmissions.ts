@@ -53,40 +53,60 @@ export const postSubmissions = async (req: Request, res: Response) => {
 
     const user = await contest.getItem('user', { uid: req.user?.uid }) as unknown as User
     if (!user) {
-      res.status(400).send('Team does not exist!')
+      res.status(401).send({ message: "Your credentials could not be recognized!" })
+      return
+    }
+
+    if (user.disabled) {
+      res.status(403).send({ message: "Your account is disabled!" })
       return
     }
 
     const problem = await contest.getItem('problem', { pid: item.pid }) as unknown as Problem
     if (!problem) {
-      res.status(400).send('Problem does not exist!')
+      res.status(400).send({ message: "Problem does not exist!" })
       return
     }
     if (user?.division != problem.division) {
-      res.status(400).send('Wrong division!')
+      res.status(403).send({ message: "You can not submit to problems in this division!" })
       return
     }
 
     const settings = await contest.get_settings()
     const now = Date.now()
-    if (now < settings.start_date * 1000) {
-      res.status(400).send('Competition has not started yet!')
-      return
-    } else if (now > settings.end_date * 1000) {
-      res.status(400).send('Competition has ended!')
-      return
+    if (problem.practice) {
+      if (now < settings.practice_start_date * 1000) {
+        res.status(403).send({ message: "The practice period has not yet begun!" })
+        return
+      } else if (now > settings.practice_end_date * 1000) {
+        res.status(403).send({ message: "Cannot submit after the practice period has finished!" })
+        return
+      }
+    } else {
+      if (now < settings.start_date * 1000) {
+        res.status(403).send({ message: "The competition has not yet begun!" })
+        return
+      } else if (now > settings.end_date * 1000) {
+        res.status(403).send({ message: "Cannot submit after the competition has finished!" })
+        return
+      }
     }
 
     const submissions = await contest.scanItems('submission', { args: { tid: req.user?.uid, pid: item.pid } })
 
     if (submissions) {
       for (const submission of submissions) {
-        if (submission.status === 'accepted') {
-          res.status(400).send("Team has already solved problem")
+        if (submission.status === 'accepted' && problem.division != 'gold') {
+          res.status(403).send({ message: "You have already solved this problem!" })
           return
         }
         if (submission.status === 'pending') {
-          res.status(400).send("Cannot submit while there are submissions for this problem in the pending state")
+          res.status(403).send({ message: "Cannot submit while your last submission is pending!" })
+          return
+        }
+
+        if (!submission.released) {
+          res.status(403).send({ message: "Cannot submit until your last submission has been released!" })
           return
         }
       }
@@ -131,12 +151,13 @@ export const postSubmissions = async (req: Request, res: Response) => {
     } else if (req.user?.division == 'gold') {
       const scratchResponse = await axios.get(`https://api.scratch.mit.edu/projects/${item.project_id}`)
       if (scratchResponse.status !== 200) {
-        res.status(400).send('Server cannot access project with that id!')
+        res.status(400).send({ message: 'Server cannot access project with that id!' })
         return
       }
 
       submission = {
         ...submission,
+        status: 'accepted',
         language: 'scratch',
         design_document: item.design_document,
         project_id: item.project_id

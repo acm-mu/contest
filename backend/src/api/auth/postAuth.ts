@@ -33,7 +33,7 @@ export const postAuth = async (req: Request, res: Response) => {
   try {
     const users = await contest.scanItems('user', { args: bodyData })
     if (!users?.length) {
-      res.status(400).send({ message: "Invalid credentials!" })
+      res.status(400).send({ message: "Hmmm... We can't find a user with that username and password!" })
       return
     }
     const user = users[0]
